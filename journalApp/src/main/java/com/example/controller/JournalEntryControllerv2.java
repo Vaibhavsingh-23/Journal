@@ -2,8 +2,8 @@ package com.example.controller;
 
 import com.example.entity.JournalEntry;
 import com.example.entity.User;
-import com.example.services.JournalEntryService;
-import com.example.services.UserService;
+import com.example.service.JournalEntryService;
+import com.example.service.UserService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

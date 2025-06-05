@@ -1,6 +1,6 @@
 
 
-package com.example.services;
+package com.example.service;
 
 import com.example.entity.JournalEntry;
 import com.example.entity.User;
@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +22,7 @@ public class JournalEntryService {
     private JournalEntryRepository journalEntryRepository;
     @Autowired
     private UserService userService;
+    @Transactional
     public void saveEntry(JournalEntry journalEntry, String userName){
         try{
             User user = userService.findByUserName(userName);
@@ -30,6 +32,7 @@ public class JournalEntryService {
             userService.saveEntry(user);
         } catch(Exception e){
             log.error("Exception" , e);
+            throw new RuntimeException("An error occured while saving the entyr", e);
         }
 
     }
