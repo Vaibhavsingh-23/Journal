@@ -4,7 +4,6 @@ import com.example.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -27,16 +26,16 @@ public class SpringSecurity {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/user").permitAll() // allow registration
-                        .requestMatchers("/journal/**","/user/**").authenticated()
-                        .requestMatchers("/user/**").authenticated() // protect other /user paths
+                        .requestMatchers("/public/**").permitAll() // ✅ allow public access
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/journal/**", "/user/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .build();
     }
+
 
 
     @Bean
