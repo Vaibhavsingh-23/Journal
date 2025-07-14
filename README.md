@@ -1,37 +1,40 @@
-Journal App (Spring Boot + MongoDB)
-A secure journal management backend built with Spring Boot and MongoDB Atlas, allowing users to register, log in, and manage personal journal entries with role-based access.
+# 📝 Journal App (Spring Boot + MongoDB)
 
-🚀 Features
-✅ User Registration & Login with JWT
+A secure journal management backend built with **Spring Boot** and **MongoDB Atlas**, allowing users to register, log in, and manage personal journal entries with role-based access.
 
-✅ Role-based Access (USER, ADMIN)
+---
 
-✅ Journal Entry CRUD (Create, Read, Update, Delete)
+## 🚀 Features
 
-✅ MongoDB Atlas Integration
+- ✅ User Registration & Login with JWT  
+- ✅ Role-based Access (`USER`, `ADMIN`)  
+- ✅ Journal Entry CRUD (Create, Read, Update, Delete)  
+- ✅ MongoDB Atlas Integration  
+- ✅ Secure REST APIs with Spring Security  
+- ✅ Logging with rolling policy
 
-✅ Secure REST APIs with Spring Security
+---
 
-✅ Logging with rolling policy
+## 🛠️ Tech Stack
 
-🛠️ Tech Stack
-Spring Boot
+- Spring Boot  
+- Spring Security + JWT  
+- MongoDB Atlas  
+- Maven  
+- Postman (for API testing)
 
-Spring Security + JWT
+---
 
-MongoDB Atlas
+## 🔐 API Overview
 
-Maven
+| Method | Endpoint               | Purpose              |
+|--------|------------------------|----------------------|
+| POST   | `/public/create-user`  | Register user        |
+| POST   | `/auth/login`          | Login + JWT          |
+| GET    | `/journals`            | Get user’s journals  |
+| POST   | `/journals`            | Add new journal      |
+| PUT    | `/journals/{id}`       | Update journal       |
+| DELETE | `/journals/{id}`       | Delete journal       |
 
-Postman (for API testing)
+> 🔒 All `/journals` endpoints require JWT in the `Authorization` header.
 
-🔐 API Overview
-Method	Endpoint	Purpose
-POST	/public/create-user	Register user
-POST	/auth/login	Login + JWT
-GET	/journals	Get user’s journals
-POST	/journals	Add new journal
-PUT	/journals/{id}	Update journal
-DELETE	/journals/{id}	Delete journal
-
-All /journals endpoints require JWT in the Authorization header.
