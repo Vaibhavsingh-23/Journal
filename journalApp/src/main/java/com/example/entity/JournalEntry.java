@@ -1,3 +1,4 @@
+
 package com.example.entity;
 
 import lombok.Data;
@@ -10,12 +11,26 @@ import java.time.LocalDateTime;
 
 @Document(collection = "journal_entries")
 @Data
-
 public class JournalEntry {
     @Id
     private ObjectId id;
+
     @NonNull
     private String title;
+
     private String content;
+
     private LocalDateTime date;
+
+    private String mood;
+
+    private String emotions;
+
+    private String aiSummary;
+
+    private String motivationalThought;
+
+    private Double sentimentScore;
+
+    private Boolean analysisCompleted = false;
 }

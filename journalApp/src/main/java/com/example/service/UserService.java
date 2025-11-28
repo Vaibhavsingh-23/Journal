@@ -20,12 +20,21 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    //private static final Logger logger =  LoggerFactory.getLogger(UserService.class);
+
+
     private static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public void saveNewUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRoles(Arrays.asList("USER"));
-        userRepository.save(user);
+        try {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            user.setRoles(Arrays.asList("USER"));
+            userRepository.save(user);
+        }catch(Exception e){
+            log.error("no one knows" + e);
+//            logger.info("holo tutu");
+//            logger.trace("hola trace coma");
+        }
     }
 
     public void saveUser(User user) {
@@ -45,5 +54,10 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    public void saveAdmin(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRoles(Arrays.asList("USER","ADMIN"));
+        userRepository.save(user);
+    }
 
 }
