@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.dto.JournalAnalysis;
+import com.example.dto.JournalEntryDTO;
 import com.example.entity.JournalEntry;
 import com.example.entity.User;
 import com.example.repository.JournalEntryRepository;
@@ -91,6 +92,28 @@ public class JournalEntryService {
             log.error("Exception while saving journal entry", e);
         }
     }
+//---------------------------------------------------------------------------------
+
+    public JournalEntryDTO toDTO(JournalEntry entry) {
+        JournalEntryDTO dto = new JournalEntryDTO();
+
+        dto.setId(entry.getId().toHexString()); // 🔥 THIS FIXES EVERYTHING
+        dto.setTitle(entry.getTitle());
+        dto.setContent(entry.getContent());
+        dto.setDate(entry.getDate());
+        dto.setMood(entry.getMood());
+        dto.setEmotions(entry.getEmotions());
+        dto.setAiSummary(entry.getAiSummary());
+        dto.setMotivationalThought(entry.getMotivationalThought());
+        dto.setSentimentScore(entry.getSentimentScore());
+        dto.setAnalysisCompleted(entry.getAnalysisCompleted());
+
+        return dto;
+    }
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
 
     /**
      * Get all journal entries

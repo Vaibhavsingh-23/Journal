@@ -37,9 +37,7 @@ public class GeminiResponse {
         private String text;
     }
 
-    /**
-     * Helper method to extract text from response
-     */
+
     public String getGeneratedText() {
         if (candidates != null && !candidates.isEmpty()) {
             Candidate candidate = candidates.get(0);

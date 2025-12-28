@@ -96,9 +96,7 @@ public class GeminiService {
                 """, journalContent);
     }
 
-    /**
-     * Parse Gemini's text response into structured JournalAnalysis object
-     */
+
     private JournalAnalysis parseAnalysisResponse(String responseText) {
         try {
             JournalAnalysis analysis = new JournalAnalysis();

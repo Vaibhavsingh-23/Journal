@@ -20,8 +20,14 @@ import java.util.List;
 @NoArgsConstructor
 
 public class User {
+
     @Id
-    private ObjectId id;
+    private ObjectId _id;
+
+    public String getId() {
+        return _id != null ? _id.toHexString() : null;
+    }
+
     @Indexed(unique = true)
     @NonNull
     @Field("username")

@@ -27,10 +27,12 @@ public class SpringSecurity {
         return http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/public/**").permitAll() //  allow public access user 
+                        .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/journal/**", "/user/**").authenticated()
                         .anyRequest().authenticated()
                 )
+                .cors(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .build();
