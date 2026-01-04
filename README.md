@@ -68,7 +68,7 @@ mvn spring-boot:run
 🌐 Frontend Pages
 ---
 
-## 📸 Screenshots
+## 📸 Application Screenshots
 
 The following screenshots demonstrate the working of the application and system output.
 
@@ -97,7 +97,6 @@ The following screenshots demonstrate the working of the application and system 
 <img src="screenshots/admindash.png" alt="Admin Dashboard" width="100%"/>
 
 ---
-
 
 ℹ️ Frontend communicates with backend via REST APIs using JavaScript fetch.
 
