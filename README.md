@@ -1,80 +1,69 @@
-📔 AI-Powered Journal Application
+# 📔 AI-Powered Journal Application
 
-A secure journaling application built with Spring Boot and Google Gemini AI.
-The system analyzes journal entries to detect mood, emotions, and sentiment, and provides AI-generated summaries and motivational insights.
+A secure journaling application built with **Spring Boot** and **Google Gemini AI**.  
+The system analyzes journal entries to detect **mood, emotions, and sentiment**, and provides  
+**AI-generated summaries and personalized motivational insights**.
 
-✨ Features
-Core Features
+---
 
-Secure user authentication (Spring Security – Basic Auth)
+## ✨ Features
 
-Role-based access control (USER / ADMIN)
+### Core Features
+- Secure user authentication (Spring Security – Basic Auth)
+- Role-based access control (USER / ADMIN)
+- Create, read, update, and delete journal entries
+- User-specific data isolation
 
-Create, read, update, and delete journal entries
+### AI Features
+- Automatic mood detection
+- Emotion extraction from journal text
+- Sentiment score generation
+- AI-generated summaries
+- Personalized motivational feedback
+- Re-analysis of existing entries
 
-User-specific data isolation
+### Admin Features
+- View all registered users
+- Create admin accounts
+- System-level user management
 
-AI Features
+---
 
-Automatic mood detection
+## 🏗️ Project Structure
 
-Emotion extraction from journal text
-
-Sentiment score generation
-
-AI-generated summaries
-
-Personalized motivational feedback
-
-Re-analysis of existing entries
-
-Admin Features
-
-View all registered users
-
-Create admin accounts
-
-System-level user management
-
-🏗️ Project Structure
 Journal/
-├── backend/    # Spring Boot REST APIs
-└── frontend/   # HTML, CSS, JavaScript UI
+├── backend/ # Spring Boot REST APIs
+├── frontend/ # HTML, CSS, JavaScript UI
+└── screenshots/ # UI screenshots used in README
 
-🛠️ Tech Stack
 
-Backend
+---
 
-Java 17
+## 🛠️ Tech Stack
 
-Spring Boot
+### Backend
+- Java 17
+- Spring Boot
+- Spring Security
 
-Spring Security
+### Database
+- MongoDB Atlas
 
-Database
+### AI
+- Google Gemini API
 
-MongoDB Atlas
+### Frontend
+- HTML
+- CSS
+- JavaScript
 
-AI
+---
 
-Google Gemini API
+## ⚙️ Running the Application (Backend)
 
-Frontend
-
-HTML
-
-CSS
-
-JavaScript
-
-⚙️ Run Locally (Backend)
+```bash
 mvn clean install
 mvn spring-boot:run
-
-
-Application runs at:
-
-http://localhost:8080
 
 🌐 Frontend Pages
 ---
@@ -140,19 +129,7 @@ Role-based authorization
 
 Users can access only their own journal entries
 
-🚀 Future Enhancements
 
-React-based frontend
-
-Mood analytics dashboard
-
-Journal export (PDF)
-
-Image attachments
-
-Search & filtering
-
-Dark mode
 
 👤 Author
 
