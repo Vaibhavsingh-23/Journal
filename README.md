@@ -77,16 +77,38 @@ Application runs at:
 http://localhost:8080
 
 🌐 Frontend Pages
+---
 
-Open frontend files directly in a browser:
+## 📸 Screenshots
 
-Login Page: frontend/loginpage.html
+The following screenshots demonstrate the working of the application and system output.
 
-Dashboard: frontend/dashboard.html
+---
 
-Create Entry: frontend/create-entry.html
+### 🔐 Login Page
 
-Admin Dashboard: frontend/admin.html
+<img src="screenshots/loginpage.png" alt="Login Page" width="100%"/>
+
+---
+
+### 📊 User Dashboard
+
+<img src="screenshots/dashboard.png" alt="User Dashboard" width="100%"/>
+
+---
+
+### ✍️ Create Journal Entry & AI Analysis
+
+<img src="screenshots/save-entry.png" alt="Create Entry" width="100%"/>
+
+---
+
+### 🛠️ Admin Dashboard
+
+<img src="screenshots/admindash.png" alt="Admin Dashboard" width="100%"/>
+
+---
+
 
 ℹ️ Frontend communicates with backend via REST APIs using JavaScript fetch.
 
