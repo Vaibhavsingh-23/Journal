@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Entry - Journal App</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <h1 class="nav-title">📔 Create New Entry</h1>
+            </div>
+            <div class="nav-right">
+                <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">
+                    ← Back to Dashboard
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Form for creating entry -->
+        <div class="create-entry-container">
+            <form id="createEntryForm" onsubmit="return false;">
+                
+                <!-- Title input -->
+                <div class="form-group">
+                    <label for="entryTitle">Entry Title</label>
+                    <input 
+                        type="text" 
+                        id="entryTitle" 
+                        placeholder="Give your entry a title..." 
+                        required
+                        maxlength="100"
+                    >
+                    <small class="form-hint">Maximum 100 characters</small>
+                </div>
+
+                <!-- Content textarea -->
+                <div class="form-group">
+                    <label for="entryContent">Your Thoughts</label>
+                    <textarea 
+                        id="entryContent" 
+                        rows="12" 
+                        placeholder="Write about your day, your feelings, your thoughts..." 
+                        required
+                        maxlength="5000"
+                    ></textarea>
+                    <small class="form-hint">
+                        Maximum 5000 characters • 
+                        <span id="charCount">0</span> characters used
+                    </small>
+                </div>
+
+                <!-- Error message -->
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <!-- Loading state (shown during AI analysis) -->
+                <div id="loadingState" class="loading-state" style="display: none;">
+                    <div class="spinner"></div>
+                    <p class="loading-text">
+                        <strong>Analyzing your entry with AI...</strong><br>
+                        Detecting mood, emotions, and generating insights...
+                    </p>
+                </div>
+
+                <!-- Submit button -->
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-large">
+                    💾 Save Entry
+                </button>
+            </form>
+
+            <!-- AI Analysis Result (shown after creation) -->
+            <div id="analysisResult" class="analysis-result" style="display: none;">
+                <h3>✨ AI Analysis Complete!</h3>
+                
+                <div class="analysis-grid">
+                    <!-- Mood -->
+                    <div class="analysis-card">
+                        <div class="analysis-label">Mood Detected</div>
+                        <div class="analysis-value" id="resultMood"></div>
+                    </div>
+
+                    <!-- Emotions -->
+                    <div class="analysis-card">
+                        <div class="analysis-label">Emotions</div>
+                        <div class="analysis-value" id="resultEmotions"></div>
+                    </div>
+
+                    <!-- Sentiment Score -->
+                    <div class="analysis-card">
+                        <div class="analysis-label">Sentiment Score</div>
+                        <div class="analysis-value" id="resultSentiment"></div>
+                        <div id="resultSentimentBar" class="sentiment-bar"></div>
+                    </div>
+                </div>
+
+                <!-- AI Summary -->
+                <div class="analysis-summary">
+                    <h4>📝 Summary</h4>
+                    <p id="resultSummary"></p>
+                </div>
+
+                <!-- Motivational Thought -->
+                <div class="analysis-motivation">
+                    <h4>💪 Motivational Insight</h4>
+                    <p id="resultMotivation"></p>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="analysis-actions">
+                    <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
+                        View All Entries
+                    </button>
+                    <button class="btn btn-secondary" onclick="createAnotherEntry()">
+                        Create Another Entry
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include JavaScript -->
+    <script src="js/api.js"></script>
+    
+    <script>
+        // ============================================
+        // AUTHENTICATION CHECK
+        // ============================================
+        
+        if (!isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+
+        // ============================================
+        // GET PAGE ELEMENTS
+        // ============================================
+        
+        const createEntryForm = document.getElementById('createEntryForm');
+        const entryTitle = document.getElementById('entryTitle');
+        const entryContent = document.getElementById('entryContent');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const loadingState = document.getElementById('loadingState');
+        const analysisResult = document.getElementById('analysisResult');
+        const charCount = document.getElementById('charCount');
+
+        // ============================================
+        // CHARACTER COUNTER
+        // ============================================
+        
+        // Update character count as user types
+        entryContent.addEventListener('input', () => {
+            const length = entryContent.value.length;
+            charCount.textContent = length;
+            
+            // Change color if approaching limit
+            if (length > 4500) {
+                charCount.style.color = 'red';
+            } else if (length > 4000) {
+                charCount.style.color = 'orange';
+            } else {
+                charCount.style.color = 'inherit';
+            }
+        });
+
+        // ============================================
+        // FORM SUBMISSION
+        // ============================================
+        
+        createEntryForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            // Get form values
+            const title = entryTitle.value.trim();
+            const content = entryContent.value.trim();
+
+            // Validate inputs
+            if (!title || !content) {
+                showError('Please fill in both title and content');
+                return;
+            }
+
+            if (content.length < 10) {
+                showError('Content is too short. Please write at least 10 characters.');
+                return;
+            }
+
+            // Disable form during submission
+            setFormDisabled(true);
+            hideError();
+            showLoading();
+
+            try {
+                // Call API to create entry
+                // This will trigger AI analysis on backend
+                console.log('Creating entry...');
+                const createdEntry = await createEntry(title, content);
+                
+                console.log('Entry created with AI analysis:', createdEntry);
+                
+                // Hide loading
+                hideLoading();
+                
+                // Display AI analysis results
+                displayAnalysisResult(createdEntry);
+                
+            } catch (error) {
+                console.error('Error creating entry:', error);
+                hideLoading();
+                setFormDisabled(false);
+                showError('Failed to create entry. Please try again.');
+            }
+        });
+
+        // ============================================
+        // DISPLAY AI ANALYSIS RESULT
+        // ============================================
+        
+        /**
+         * Display AI analysis results after entry creation
+         * @param {Object} entry - Created journal entry with AI analysis
+         */
+        function displayAnalysisResult(entry) {
+            // Hide the form
+            createEntryForm.style.display = 'none';
+            
+            // Show analysis result
+            analysisResult.style.display = 'block';
+            
+            // Populate analysis data
+            
+            // Mood
+            const moodEmoji = getMoodEmoji(entry.mood);
+            document.getElementById('resultMood').innerHTML = 
+                `<span class="mood-badge ${getMoodClass(entry.mood)}">${moodEmoji} ${entry.mood || 'Unknown'}</span>`;
+            
+            // Emotions
+            document.getElementById('resultEmotions').textContent = entry.emotions || 'N/A';
+            
+            // Sentiment Score
+            const sentimentScore = entry.sentimentScore || 0;
+            document.getElementById('resultSentiment').textContent = sentimentScore.toFixed(2);
+            
+            // Sentiment Bar
+            const sentimentPercent = ((sentimentScore + 1) / 2) * 100;
+            const sentimentColor = getSentimentColor(sentimentScore);
+            document.getElementById('resultSentimentBar').innerHTML = 
+                `<div class="sentiment-fill ${sentimentColor}" style="width: ${sentimentPercent}%"></div>`;
+            
+            // Summary
+            document.getElementById('resultSummary').textContent = entry.aiSummary || 'No summary available';
+            
+            // Motivational Thought
+            document.getElementById('resultMotivation').textContent = entry.motivationalThought || 'Keep journaling!';
+        }
+
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+        
+        /**
+         * Get emoji for mood
+         */
+        function getMoodEmoji(mood) {
+            const moodEmojis = {
+                'Happy': '😊',
+                'Sad': '😔',
+                'Anxious': '😰',
+                'Grateful': '🙏',
+                'Excited': '🤩',
+                'Reflective': '🤔',
+                'Neutral': '😐',
+                'Angry': '😠',
+                'Calm': '😌'
+            };
+            return moodEmojis[mood] || '📝';
+        }
+
+        /**
+         * Get CSS class for mood
+         */
+        function getMoodClass(mood) {
+            return `mood-${(mood || 'neutral').toLowerCase()}`;
+        }
+
+        /**
+         * Get sentiment color class
+         */
+        function getSentimentColor(score) {
+            if (score >= 0.5) return 'sentiment-positive';
+            if (score >= 0) return 'sentiment-neutral';
+            return 'sentiment-negative';
+        }
+
+        /**
+         * Show error message
+         */
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        /**
+         * Hide error message
+         */
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        /**
+         * Show loading state
+         */
+        function showLoading() {
+            loadingState.style.display = 'block';
+        }
+
+        /**
+         * Hide loading state
+         */
+        function hideLoading() {
+            loadingState.style.display = 'none';
+        }
+
+        /**
+         * Enable/disable form inputs
+         */
+        function setFormDisabled(disabled) {
+            entryTitle.disabled = disabled;
+            entryContent.disabled = disabled;
+            submitBtn.disabled = disabled;
+        }
+
+        /**
+         * Create another entry (reset form)
+         */
+        function createAnotherEntry() {
+            // Reload the page to reset everything
+            window.location.reload();
+        }
+
+        // ============================================
+        // AUTO-SAVE TO LOCALSTORAGE (DRAFT)
+        // ============================================
+        
+        // Save draft to localStorage as user types
+        let saveTimeout;
+        
+        function saveDraft() {
+            const draft = {
+                title: entryTitle.value,
+                content: entryContent.value,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('entryDraft', JSON.stringify(draft));
+            console.log('Draft saved');
+        }
+
+        // Save draft after user stops typing for 2 seconds
+        entryTitle.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveDraft, 2000);
+        });
+
+        entryContent.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveDraft, 2000);
+        });
+
+        // Load draft when page loads
+        window.addEventListener('load', () => {
+            const draftJson = localStorage.getItem('entryDraft');
+            if (draftJson) {
+                try {
+                    const draft = JSON.parse(draftJson);
+                    
+                    // Ask user if they want to restore draft
+                    if (confirm('Found a saved draft. Would you like to restore it?')) {
+                        entryTitle.value = draft.title || '';
+                        entryContent.value = draft.content || '';
+                        
+                        // Update character count
+                        charCount.textContent = entryContent.value.length;
+                    }
+                } catch (error) {
+                    console.error('Error loading draft:', error);
+                }
+            }
+        });
+
+        // Clear draft after successful submission
+        createEntryForm.addEventListener('submit', () => {
+            // Clear draft after short delay (to ensure submission succeeds)
+            setTimeout(() => {
+                localStorage.removeItem('entryDraft');
+            }, 1000);
+        });
+    </script>
+
+    <!-- Dark Mode Toggle Button -->
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+    <span id="themeIcon">🌙</span>
+</button>
+
+<script>
+    // Dark mode toggle script
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Update icon
+        document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    }
+
+    // Load saved theme on page load
+    (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        // Set correct icon
+        const themeIcon = document.getElementById('themeIcon');
+        if (themeIcon) {
+            themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        }
+    })();
+</script>
+</body>
+</html>

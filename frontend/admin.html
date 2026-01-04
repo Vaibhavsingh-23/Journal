@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Journal App</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <h1 class="nav-title">👑 Admin Dashboard</h1>
+            </div>
+            <div class="nav-right">
+                <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">
+                    📔 My Journal
+                </button>
+                <button class="btn btn-secondary" id="logoutBtn">
+                    🚪 Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Page header -->
+        <div class="dashboard-header">
+            <h2>User Management</h2>
+            <p class="subtitle">View and manage all users in the system</p>
+        </div>
+
+        <!-- Create Admin User Section -->
+        <div class="admin-create-section">
+            <h3>➕ Create New Admin User</h3>
+            <form id="createAdminForm" onsubmit="return false;">
+                <div class="admin-form-row">
+                    <div class="form-group">
+                        <label for="adminUsername">Username</label>
+                        <input 
+                            type="text" 
+                            id="adminUsername" 
+                            placeholder="Enter username" 
+                            required
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Password</label>
+                        <input 
+                            type="password" 
+                            id="adminPassword" 
+                            placeholder="Enter password" 
+                            required
+                        >
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            Create Admin
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading users...</p>
+        </div>
+
+        <!-- Error message -->
+        <div id="errorContainer" class="error-container" style="display: none;"></div>
+
+        <!-- Success message -->
+        <div id="successContainer" class="success-container" style="display: none;"></div>
+
+        <!-- Users Table -->
+        <div class="users-table-container">
+            <h3>👥 All Users</h3>
+            <table id="usersTable" class="users-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Roles</th>
+                        <th>Journal Entries</th>
+                        <th>User ID</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <!-- Users will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Include JavaScript -->
+    <script src="js/api.js"></script>
+    
+    <script>
+        // ============================================
+        // AUTHENTICATION CHECK
+        // ============================================
+        
+        if (!isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+
+        // ============================================
+        // GET PAGE ELEMENTS
+        // ============================================
+        
+        const logoutBtn = document.getElementById('logoutBtn');
+        const createAdminForm = document.getElementById('createAdminForm');
+        const adminUsername = document.getElementById('adminUsername');
+        const adminPassword = document.getElementById('adminPassword');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const errorContainer = document.getElementById('errorContainer');
+        const successContainer = document.getElementById('successContainer');
+        const usersTableBody = document.getElementById('usersTableBody');
+
+        // ============================================
+        // BUTTON EVENT LISTENERS
+        // ============================================
+        
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                logout();
+            }
+        });
+
+        // ============================================
+        // LOAD USERS ON PAGE LOAD
+        // ============================================
+        
+        window.addEventListener('load', loadAllUsers);
+
+        /**
+         * Fetch and display all users
+         */
+        async function loadAllUsers() {
+            showLoading();
+            hideError();
+            hideSuccess();
+            
+            try {
+                // Call admin API to get all users
+                const users = await getAllUsers();
+                
+                hideLoading();
+
+                if (!users || users.length === 0) {
+                    usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No users found</td></tr>';
+                    return;
+                }
+
+                // Clear table
+                usersTableBody.innerHTML = '';
+
+                // Display each user
+                users.forEach(user => {
+                    createUserRow(user);
+                });
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                hideLoading();
+                
+                // Check if it's a 403 Forbidden (not admin)
+                if (error.message && error.message.includes('403')) {
+                    showError('Access denied. You need ADMIN role to view this page.');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 2000);
+                } else {
+                    showError('Failed to load users. Please try again.');
+                }
+            }
+        }
+
+        /**
+         * Create a table row for a user
+         * @param {Object} user - User object
+         */
+        function createUserRow(user) {
+            const row = document.createElement('tr');
+            
+            // Get user ID
+            let userId = 'N/A';
+            if (user.id) {
+                if (typeof user.id === 'object') {
+                    userId = user.id.timestamp || JSON.stringify(user.id);
+                } else {
+                    userId = user.id;
+                }
+            }
+
+            // Get roles
+            const roles = user.roles ? user.roles.join(', ') : 'USER';
+            
+            // Get journal count
+            const journalCount = user.journalEntries ? user.journalEntries.length : 0;
+
+            // Create role badges
+            let roleBadges = '';
+            if (user.roles && user.roles.includes('ADMIN')) {
+                roleBadges += '<span class="role-badge admin-badge">ADMIN</span> ';
+            }
+            if (user.roles && user.roles.includes('USER')) {
+                roleBadges += '<span class="role-badge user-badge">USER</span>';
+            }
+
+            row.innerHTML = `
+                <td><strong>${escapeHtml(user.userName || 'Unknown')}</strong></td>
+                <td>${roleBadges}</td>
+                <td>${journalCount} entries</td>
+                <td><code class="user-id">${userId.substring(0, 10)}...</code></td>
+            `;
+
+            usersTableBody.appendChild(row);
+        }
+
+        // ============================================
+        // CREATE ADMIN USER
+        // ============================================
+        
+        createAdminForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            const username = adminUsername.value.trim();
+            const password = adminPassword.value.trim();
+
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+
+            hideError();
+            hideSuccess();
+
+            try {
+                showLoading();
+                
+                // Call admin API to create admin user
+                await createAdminUser(username, password);
+                
+                hideLoading();
+                
+                // Show success message
+                showSuccess(`Admin user "${username}" created successfully!`);
+                
+                // Clear form
+                adminUsername.value = '';
+                adminPassword.value = '';
+                
+                // Reload users table
+                await loadAllUsers();
+
+            } catch (error) {
+                console.error('Error creating admin:', error);
+                hideLoading();
+                showError(error.message || 'Failed to create admin user. Please try again.');
+            }
+        });
+
+        // ============================================
+        // ADMIN API FUNCTIONS
+        // ============================================
+        
+        /**
+         * Get all users (admin only)
+         */
+        async function getAllUsers() {
+            const credentials = getAuthCredentials();
+            
+            if (!credentials) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/admin/all-user`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Basic ${credentials}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            if (response.status === 403) {
+                throw new Error('403: Access denied. Admin role required.');
+            }
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch users: ${response.status}`);
+            }
+
+            return await response.json();
+        }
+
+        /**
+         * Create admin user (admin only)
+         */
+        async function createAdminUser(username, password) {
+            const credentials = getAuthCredentials();
+            
+            if (!credentials) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const userData = {
+                userName: username,
+                password: password
+            };
+
+            const response = await fetch(`${API_BASE_URL}/admin/create-admin-user`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${credentials}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            if (response.status === 403) {
+                throw new Error('Access denied. Admin role required.');
+            }
+
+            if (!response.ok) {
+                throw new Error(`Failed to create admin: ${response.status}`);
+            }
+
+            return await response.json();
+        }
+
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+        
+        function showLoading() {
+            loadingSpinner.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loadingSpinner.style.display = 'none';
+        }
+
+        function showError(message) {
+            errorContainer.textContent = message;
+            errorContainer.style.display = 'block';
+            
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        function hideError() {
+            errorContainer.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            successContainer.textContent = message;
+            successContainer.style.display = 'block';
+            
+            setTimeout(() => {
+                successContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        function hideSuccess() {
+            successContainer.style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+
+<!-- Dark Mode Toggle Button -->
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+    <span id="themeIcon">🌙</span>
+</button>
+
+<script>
+    // Dark mode toggle script
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Update icon
+        document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    }
+
+    // Load saved theme on page load
+    (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        // Set correct icon
+        const themeIcon = document.getElementById('themeIcon');
+        if (themeIcon) {
+            themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        }
+    })();
+</script>
+
+</body>
+</html>

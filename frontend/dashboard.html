@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Journal - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation bar at top -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <!-- Left side: App title -->
+            <div class="nav-left">
+                <h1 class="nav-title">📔 My Journal</h1>
+                <!-- Display logged in username -->
+                <span class="nav-username" id="navUsername"></span>
+            </div>
+            
+            <!-- Right side: Action buttons -->
+            <div class="nav-right">
+                <!-- Admin Dashboard button (only shown to admins) -->
+                <button class="btn btn-secondary" id="adminDashboardBtn" style="display: none;">
+                    👑 Admin
+                </button>
+                <!-- Button to create new entry -->
+                <button class="btn btn-primary" id="createEntryBtn">
+                    ➕ New Entry
+                </button>
+                <!-- Logout button -->
+                <button class="btn btn-secondary" id="logoutBtn">
+                    🚪 Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content area -->
+    <div class="container">
+        <!-- Page header -->
+        <div class="dashboard-header">
+            <h2>Your Journal Entries</h2>
+            <p class="subtitle">Track your thoughts and emotions with AI insights</p>
+        </div>
+
+        <!-- Loading indicator (shown while fetching entries) -->
+        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading your entries...</p>
+        </div>
+
+        <!-- Error message area -->
+        <div id="errorContainer" class="error-container" style="display: none;">
+            <!-- Error text will be inserted here -->
+        </div>
+
+        <!-- Empty state (shown when no entries exist) -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-icon">📝</div>
+            <h3>No journal entries yet</h3>
+            <p>Start writing your first entry to track your thoughts and emotions!</p>
+            <button class="btn btn-primary" onclick="window.location.href='create-entry.html'">
+                Create Your First Entry
+            </button>
+        </div>
+
+        <!-- Grid container for journal entries -->
+        <!-- This will be populated by JavaScript -->
+        <div id="entriesGrid" class="entries-grid">
+            <!-- Entry cards will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Include JavaScript files -->
+    <script src="js/api.js"></script>
+    
+    <script>
+        // ============================================
+        // AUTHENTICATION CHECK
+        // ============================================
+        
+        // Check if user is logged in when page loads
+        if (!isLoggedIn()) {
+            // Not logged in, redirect to login page
+            window.location.href = 'index.html';
+        }
+
+        // ============================================
+        // GET PAGE ELEMENTS
+        // ============================================
+        
+        const navUsername = document.getElementById('navUsername');
+        const createEntryBtn = document.getElementById('createEntryBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const adminDashboardBtn = document.getElementById('adminDashboardBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const errorContainer = document.getElementById('errorContainer');
+        const emptyState = document.getElementById('emptyState');
+        const entriesGrid = document.getElementById('entriesGrid');
+
+        // ============================================
+        // DISPLAY USERNAME
+        // ============================================
+        
+        // Get username from localStorage and display it
+        const username = getUsername();
+        if (username) {
+            navUsername.textContent = `Welcome, ${username}!`;
+        }
+
+        // ============================================
+        // BUTTON EVENT LISTENERS
+        // ============================================
+        
+        // Create Entry button
+        createEntryBtn.addEventListener('click', () => {
+            window.location.href = 'create-entry.html';
+        });
+
+        // Logout button
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                logout(); // Function from api.js
+            }
+        });
+
+        // Admin Dashboard button
+        adminDashboardBtn.addEventListener('click', () => {
+            window.location.href = 'admin.html';
+        });
+
+        // Check if user is admin and show admin button
+        checkIfAdmin();
+
+        // ============================================
+        // LOAD AND DISPLAY ENTRIES
+        // ============================================
+        
+        // Load entries when page loads
+        window.addEventListener('load', loadEntries);
+
+        /**
+         * Fetch and display all journal entries
+         */
+        async function loadEntries() {
+            // Show loading spinner
+            showLoading();
+            
+            // Hide error and empty state
+            hideError();
+            emptyState.style.display = 'none';
+            
+            // Clear existing entries
+            entriesGrid.innerHTML = '';
+
+            try {
+                // Fetch entries from backend using api.js function
+                const entries = await getAllEntries();
+                
+                // Hide loading spinner
+                hideLoading();
+
+                // Check if user has any entries
+                if (!entries || entries.length === 0) {
+                    // No entries, show empty state
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                // Display each entry as a card
+                entries.forEach(entry => {
+                    createEntryCard(entry);
+                });
+
+            } catch (error) {
+                console.error('Error loading entries:', error);
+                hideLoading();
+                showError('Failed to load entries. Please try again.');
+            }
+        }
+
+        /**
+         * Create and display an entry card
+         * @param {Object} entry - Journal entry object from backend
+         */
+        function createEntryCard(entry) {
+            // Create card container div
+            const card = document.createElement('div');
+            card.className = 'entry-card';
+            
+            // Get mood emoji based on mood
+            const moodEmoji = getMoodEmoji(entry.mood);
+            
+            // Format date for display
+            const date = formatDate(entry.date);
+            
+            // Get sentiment bar color based on score
+            const sentimentColor = getSentimentColor(entry.sentimentScore);
+            
+            // Calculate sentiment percentage (convert -1 to 1 scale to 0 to 100)
+            const sentimentPercent = ((entry.sentimentScore + 1) / 2) * 100;
+
+            // Get the actual ObjectId string
+            // MongoDB returns id as an object with timestamp, date properties
+            // We need the actual hex string ID
+            let entryIdString;
+            if (entry.id && typeof entry.id === 'object') {
+                // If id is an object with timestamp property
+                entryIdString = entry.id.timestamp || JSON.stringify(entry.id);
+            } else {
+                // If id is already a string
+                entryIdString = entry.id;
+            }
+
+            // Build HTML for the card
+            card.innerHTML = `
+                <div class="entry-header">
+                    <h3 class="entry-title">${escapeHtml(entry.title)}</h3>
+                    <span class="entry-mood ${getMoodClass(entry.mood)}">
+                        ${moodEmoji} ${entry.mood || 'Unknown'}
+                    </span>
+                </div>
+                
+                <p class="entry-date">${date}</p>
+                
+                <p class="entry-summary">
+                    ${escapeHtml(truncateText(entry.aiSummary || entry.content || 'No summary available', 120))}
+                </p>
+                
+                <div class="entry-sentiment">
+                    <span class="sentiment-label">Sentiment:</span>
+                    <div class="sentiment-bar">
+                        <div class="sentiment-fill ${sentimentColor}" 
+                             style="width: ${sentimentPercent}%">
+                        </div>
+                    </div>
+                    <span class="sentiment-score">${entry.sentimentScore?.toFixed(1) || '0.0'}</span>
+                </div>
+                
+                <div class="entry-actions">
+                    <button class="btn btn-small btn-primary" onclick="viewEntry('${entryIdString}')">
+                        👁️ View
+                    </button>
+                    <button class="btn btn-small btn-danger" onclick="confirmDelete('${entryIdString}')">
+                        🗑️ Delete
+                    </button>
+                </div>
+            `;
+
+            // Add card to grid
+            entriesGrid.appendChild(card);
+        }
+
+        // ============================================
+        // ENTRY ACTIONS
+        // ============================================
+        
+        /**
+         * Navigate to entry details page
+         * @param {string} entryId - Entry ID
+         */
+        function viewEntry(entryId) {
+            // Redirect to details page with entry ID in URL
+            window.location.href = `entry-details.html?id=${entryId}`;
+        }
+
+        /**
+         * Confirm and delete entry
+         * @param {string} entryId - Entry ID to delete
+         */
+        async function confirmDelete(entryId) {
+            // Ask user to confirm deletion
+            if (!confirm('Are you sure you want to delete this entry? This action cannot be undone.')) {
+                return; // User cancelled
+            }
+
+            try {
+                // Show loading
+                showLoading();
+                
+                // Call delete API
+                await deleteEntry(entryId);
+                
+                // Reload entries to reflect deletion
+                await loadEntries();
+                
+                // Show success message
+                showSuccess('Entry deleted successfully!');
+
+            } catch (error) {
+                console.error('Error deleting entry:', error);
+                hideLoading();
+                showError('Failed to delete entry. Please try again.');
+            }
+        }
+
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+        
+        /**
+         * Get emoji for mood
+         * @param {string} mood - Mood string
+         * @returns {string} Emoji
+         */
+        function getMoodEmoji(mood) {
+            const moodEmojis = {
+                'Happy': '😊',
+                'Sad': '😔',
+                'Anxious': '😰',
+                'Grateful': '🙏',
+                'Excited': '🤩',
+                'Reflective': '🤔',
+                'Neutral': '😐',
+                'Angry': '😠',
+                'Calm': '😌'
+            };
+            return moodEmojis[mood] || '📝';
+        }
+
+        /**
+         * Get CSS class for mood
+         * @param {string} mood - Mood string
+         * @returns {string} CSS class name
+         */
+        function getMoodClass(mood) {
+            return `mood-${(mood || 'neutral').toLowerCase()}`;
+        }
+
+        /**
+         * Get color class for sentiment score
+         * @param {number} score - Sentiment score (-1 to 1)
+         * @returns {string} CSS class name
+         */
+        function getSentimentColor(score) {
+            if (score >= 0.5) return 'sentiment-positive';
+            if (score >= 0) return 'sentiment-neutral';
+            return 'sentiment-negative';
+        }
+
+        /**
+         * Format date for display
+         * @param {string} dateString - ISO date string
+         * @returns {string} Formatted date
+         */
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        /**
+         * Truncate text to specified length
+         * @param {string} text - Text to truncate
+         * @param {number} maxLength - Maximum length
+         * @returns {string} Truncated text
+         */
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+
+        /**
+         * Escape HTML to prevent XSS attacks
+         * @param {string} text - Text to escape
+         * @returns {string} Escaped text
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        /**
+         * Show loading spinner
+         */
+        function showLoading() {
+            loadingSpinner.style.display = 'block';
+        }
+
+        /**
+         * Hide loading spinner
+         */
+        function hideLoading() {
+            loadingSpinner.style.display = 'none';
+        }
+
+        /**
+         * Show error message
+         * @param {string} message - Error message
+         */
+        function showError(message) {
+            errorContainer.textContent = message;
+            errorContainer.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        /**
+         * Hide error message
+         */
+        function hideError() {
+            errorContainer.style.display = 'none';
+        }
+
+        /**
+         * Show success message
+         * @param {string} message - Success message
+         */
+        function showSuccess(message) {
+            // Create temporary success div
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            document.body.appendChild(successDiv);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+
+        /**
+         * Check if current user is admin
+         */
+        async function checkIfAdmin() {
+            try {
+                const credentials = getAuthCredentials();
+                if (!credentials) return;
+
+                // Try to call admin endpoint
+                const response = await fetch(`${API_BASE_URL}/admin/all-user`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Basic ${credentials}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                // If 200 OK, user is admin
+                if (response.ok) {
+                    adminDashboardBtn.style.display = 'block';
+                }
+            } catch (error) {
+                // Not admin or error, hide button
+                adminDashboardBtn.style.display = 'none';
+            }
+        }
+    </script>
+    <!-- Dark Mode Toggle Button -->
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+    <span id="themeIcon">🌙</span>
+</button>
+
+<script>
+    // Dark mode toggle script
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Update icon
+        document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    }
+
+    // Load saved theme on page load
+    (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        // Set correct icon
+        const themeIcon = document.getElementById('themeIcon');
+        if (themeIcon) {
+            themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        }
+    })();
+</script>
+</body>
+</html>

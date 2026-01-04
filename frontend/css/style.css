@@ -1,0 +1,1065 @@
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+
+/* 
+   * selector means "apply to everything"
+   box-sizing: border-box makes width calculations easier
+   margin: 0 removes default spacing
+*/
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 
+   Body: Main page styles
+   font-family: Sets the font for entire page
+   background: Light gray background
+   color: Dark text color
+*/
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #333;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* ============================================
+   NAVIGATION BAR
+   ============================================ */
+
+.navbar {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-title {
+    font-size: 1.5rem;
+    color: #667eea;
+}
+
+.nav-username {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.nav-right {
+    display: flex;
+    gap: 1rem;
+}
+
+/* ============================================
+   CONTAINERS
+   ============================================ */
+
+/* 
+   Container: Centers content and adds padding
+   max-width: Limits how wide content can be
+   margin: 0 auto centers the container
+*/
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+/* ============================================
+   CARDS
+   ============================================ */
+
+/* 
+   Cards: White boxes with shadow for content
+   border-radius: Rounds the corners
+   box-shadow: Adds depth/shadow effect
+*/
+.login-card,
+.create-entry-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+    padding: 3rem;
+    max-width: 600px;
+    margin: 4rem auto;
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+
+.app-title {
+    text-align: center;
+    color: #667eea;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.page-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+}
+
+.subtitle {
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+/* ============================================
+   FORMS
+   ============================================ */
+
+/* 
+   Form Group: Container for each input field
+   margin-bottom: Adds space between fields
+*/
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+/* 
+   Label: Text above input fields
+   display: block makes it take full width
+   font-weight: bold makes text thicker
+*/
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* 
+   Input fields: Text boxes for user input
+   width: 100% makes it fill the container
+   padding: Space inside the input
+   border: Line around the input
+   border-radius: Rounded corners
+*/
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.3s;
+}
+
+/* 
+   :focus is when user clicks on input
+   outline: none removes default browser outline
+   border-color: Changes border color when focused
+*/
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Textarea specific styles */
+.form-group textarea {
+    resize: vertical; /* Allow vertical resize only */
+    min-height: 100px;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+/* 
+   Base button styles
+   cursor: pointer makes it look clickable
+   transition: Smooth animation for hover effects
+*/
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+/* Primary button: Main action button (blue/purple) */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+/* :hover is when mouse is over the button */
+.btn-primary:hover {
+    transform: translateY(-2px); /* Moves up slightly */
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Secondary button: Less important actions (gray) */
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+/* Danger button: Delete actions (red) */
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+/* Button sizes */
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    width: 100%;
+}
+
+/* Disabled button */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   MESSAGES
+   ============================================ */
+
+/* Error messages: Red box with warning text */
+.error-message,
+.error-container {
+    background: #ffebee;
+    color: #c62828;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #c62828;
+}
+
+/* Success message: Green floating notification */
+.success-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4caf50;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    z-index: 10000;
+    animation: slideIn 0.3s;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Loading message */
+.loading-message,
+.loading-state {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+
+.loading-spinner {
+    text-align: center;
+    padding: 3rem;
+}
+
+/* 
+   Spinner animation
+   Creates a rotating circle using CSS
+*/
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   DASHBOARD
+   ============================================ */
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.dashboard-header h2 {
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-header .subtitle {
+    color: rgba(255,255,255,0.9);
+}
+
+/* Empty state: Shown when no entries exist */
+.empty-state {
+    background: white;
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+/* ============================================
+   ENTRIES GRID
+   ============================================ */
+
+/* 
+   Grid: Displays entries in a responsive grid
+   grid-template-columns: Number of columns
+   repeat(auto-fill, ...) creates columns automatically
+   minmax(300px, 1fr) means min 300px wide, max equal width
+*/
+.entries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+/* ============================================
+   ENTRY CARD
+   ============================================ */
+
+.entry-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.entry-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+}
+
+.entry-title {
+    font-size: 1.25rem;
+    color: #333;
+    margin: 0;
+    flex: 1;
+}
+
+.entry-date {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 1rem;
+}
+
+.entry-summary {
+    color: #555;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+/* ============================================
+   MOOD BADGES
+   ============================================ */
+
+.entry-mood,
+.mood-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Different colors for different moods */
+.mood-happy { background: #e8f5e9; color: #2e7d32; }
+.mood-sad { background: #e3f2fd; color: #1565c0; }
+.mood-anxious { background: #fff3e0; color: #e65100; }
+.mood-grateful { background: #f3e5f5; color: #6a1b9a; }
+.mood-excited { background: #ffebee; color: #c62828; }
+.mood-reflective { background: #e0f2f1; color: #00695c; }
+.mood-neutral { background: #f5f5f5; color: #616161; }
+.mood-angry { background: #ffcdd2; color: #b71c1c; }
+.mood-calm { background: #e1f5fe; color: #0277bd; }
+
+/* ============================================
+   SENTIMENT BAR
+   ============================================ */
+
+.entry-sentiment {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.sentiment-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+}
+
+/* 
+   Sentiment bar: Visual representation of sentiment score
+   background: Gray background
+   border-radius: Rounded bar
+   overflow: hidden keeps fill bar inside
+*/
+.sentiment-bar {
+    flex: 1;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* 
+   Sentiment fill: Colored bar inside sentiment-bar
+   height: 100% fills the container height
+   transition: Smooth width animation
+*/
+.sentiment-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.sentiment-positive { background: #4caf50; }
+.sentiment-neutral { background: #ffc107; }
+.sentiment-negative { background: #f44336; }
+
+.sentiment-score {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #333;
+    min-width: 2.5rem;
+    text-align: right;
+}
+
+/* ============================================
+   ENTRY ACTIONS
+   ============================================ */
+
+.entry-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.entry-actions .btn {
+    flex: 1;
+}
+
+/* ============================================
+   ANALYSIS RESULT (Create Entry Page)
+   ============================================ */
+
+.analysis-result {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+}
+
+.analysis-result h3 {
+    text-align: center;
+    color: #667eea;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+}
+
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.analysis-card {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.analysis-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.analysis-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.analysis-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.analysis-summary,
+.analysis-motivation {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.analysis-summary h4,
+.analysis-motivation h4 {
+    color: #667eea;
+    margin-bottom: 0.75rem;
+}
+
+.motivational-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.motivational-box h4 {
+    color: white;
+}
+
+.analysis-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.analysis-actions .btn {
+    flex: 1;
+}
+
+/* ============================================
+   ENTRY DETAILS PAGE
+   ============================================ */
+
+.entry-details-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+}
+
+.entry-details-header {
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.entry-details-title {
+    color: #333;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.entry-details-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.entry-details-content {
+    margin-bottom: 2rem;
+}
+
+.entry-details-content h3 {
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+.entry-text {
+    color: #555;
+    line-height: 1.8;
+    white-space: pre-wrap; /* Preserve line breaks */
+}
+
+.analysis-section {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.analysis-section h2 {
+    color: #667eea;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.analysis-box {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.analysis-box h3 {
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+.entry-actions-bar {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+/* ============================================
+   SIGNUP LINK
+   ============================================ */
+
+.signup-text {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #666;
+}
+
+.signup-text a,
+.link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.signup-text a:hover,
+.link:hover {
+    text-decoration: underline;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* 
+   @media query: Different styles for different screen sizes
+   max-width: 768px means "screens smaller than 768px"
+   This makes the site work on mobile devices
+*/
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+    
+    .nav-container {
+        padding: 0 1rem;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav-right {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .entries-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .login-card,
+    .create-entry-container {
+        padding: 2rem;
+        margin: 2rem auto;
+    }
+    
+    .entry-actions-bar {
+        flex-direction: column;
+    }
+    
+    .analysis-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+/* Fade in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.entry-card,
+.analysis-card {
+    animation: fadeIn 0.5s ease;
+}
+
+/* ============================================
+   ADMIN DASHBOARD
+   ============================================ */
+
+.admin-create-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.admin-create-section h3 {
+    color: #667eea;
+    margin-bottom: 1.5rem;
+}
+
+.admin-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.users-table-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.users-table-container h3 {
+    color: #667eea;
+    margin-bottom: 1.5rem;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.users-table thead {
+    background: #f8f9fa;
+}
+
+.users-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.users-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.users-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 0.25rem;
+}
+
+.admin-badge {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.user-badge {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.user-id {
+    background: #f5f5f5;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.success-container {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #2e7d32;
+}
+
+/* Responsive Admin Page */
+@media (max-width: 768px) {
+    .admin-form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .users-table {
+        font-size: 0.9rem;
+    }
+    
+    .users-table th,
+    .users-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+/* ============================================
+   SCROLLBAR STYLING (Optional)
+   ============================================ */
+
+/* Custom scrollbar for webkit browsers (Chrome, Safari) */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+/* ============================================
+   DARK MODE STYLES
+   Add this to the END of your style.css file
+   ============================================ */
+
+/* Dark mode variables */
+:root {
+    --bg-primary: #f0f2f5;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --border-color: #e0e0e0;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-card: #0f3460;
+    --text-primary: #eaeaea;
+    --text-secondary: #b0b0b0;
+    --border-color: #2a2a3e;
+    --shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* Apply dark mode colors */
+body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.navbar {
+    background: var(--bg-secondary);
+    box-shadow: 0 2px 10px var(--shadow);
+}
+
+.login-card,
+.create-entry-container,
+.entry-card,
+.admin-create-section,
+.users-table-container,
+.entry-details-container {
+    background: var(--bg-card);
+    box-shadow: 0 5px 30px var(--shadow);
+}
+
+.form-group input,
+.form-group textarea {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.form-group label {
+    color: var(--text-primary);
+}
+
+.entry-title,
+.nav-title,
+h1, h2, h3, h4, h5 {
+    color: var(--text-primary);
+}
+
+.entry-summary,
+.entry-text,
+p {
+    color: var(--text-secondary);
+}
+
+.users-table {
+    background: var(--bg-card);
+}
+
+.users-table thead {
+    background: var(--bg-secondary);
+}
+
+.users-table th,
+.users-table td {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.users-table tbody tr:hover {
+    background: var(--bg-secondary);
+}
+
+.analysis-card,
+.analysis-box {
+    background: var(--bg-secondary);
+}
+
+.empty-state {
+    background: var(--bg-card);
+}
+
+/* Dark mode toggle button */
+.theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Smooth transitions for all elements */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Keep button colors vibrant in dark mode */
+[data-theme="dark"] .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+[data-theme="dark"] .btn-secondary {
+    background: #2a2a3e;
+    color: #eaeaea;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background: #3a3a4e;
+}
+
+/* Keep mood badges readable in dark mode */
+[data-theme="dark"] .mood-happy { background: #1b5e20; color: #a5d6a7; }
+[data-theme="dark"] .mood-sad { background: #0d47a1; color: #90caf9; }
+[data-theme="dark"] .mood-anxious { background: #e65100; color: #ffcc80; }
+[data-theme="dark"] .mood-grateful { background: #4a148c; color: #ce93d8; }
+[data-theme="dark"] .mood-excited { background: #b71c1c; color: #ef9a9a; }
+[data-theme="dark"] .mood-reflective { background: #004d40; color: #80cbc4; }
+[data-theme="dark"] .mood-neutral { background: #424242; color: #e0e0e0; }
+[data-theme="dark"] .mood-angry { background: #c62828; color: #ffcdd2; }
+[data-theme="dark"] .mood-calm { background: #01579b; color: #81d4fa; }

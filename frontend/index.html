@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal App - Login</title>
+    
+    <!-- Link to our CSS file for styling -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Main container for login page -->
+    <div class="container">
+        <div class="login-card">
+            <!-- App title with emoji -->
+            <h1 class="app-title">📔 Journal App</h1>
+            <h2 class="page-title">Login</h2>
+            
+            <!-- Login form -->
+            <!-- onsubmit="return false" prevents default form submission (page reload) -->
+            <form id="loginForm" onsubmit="return false;">
+                
+                <!-- Username input field -->
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <!-- id="username" allows JavaScript to find this element -->
+                    <!-- required makes this field mandatory -->
+                    <input 
+                        type="text" 
+                        id="username" 
+                        placeholder="Enter your username" 
+                        required
+                        autocomplete="username"
+                    >
+                </div>
+
+                <!-- Password input field -->
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <!-- type="password" hides the text (shows dots) -->
+                    <input 
+                        type="password" 
+                        id="password" 
+                        placeholder="Enter your password" 
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <!-- Error message area (hidden by default) -->
+                <!-- id="errorMessage" allows JavaScript to show/hide errors -->
+                <div id="errorMessage" class="error-message" style="display: none;">
+                    <!-- Error text will be inserted here by JavaScript -->
+                </div>
+
+                <!-- Loading message (hidden by default) -->
+                <div id="loadingMessage" class="loading-message" style="display: none;">
+                    Logging in...
+                </div>
+
+                <!-- Submit button -->
+                <!-- id="loginButton" allows JavaScript to disable/enable button -->
+                <button type="submit" id="loginButton" class="btn btn-primary">
+                    Login
+                </button>
+            </form>
+
+            <!-- Sign up link (for future implementation) -->
+            <p class="signup-text">
+                Don't have an account? 
+                <!--<a href="#" id="signupLink">Sign up</a>-->
+                <a href="signup.html">Sign up</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Include our API functions file -->
+    <!-- This must come BEFORE auth.js because auth.js uses functions from api.js -->
+    <script src="js/api.js"></script>
+    
+    <!-- JavaScript for this page -->
+    <script>
+        // ============================================
+        // CHECK IF ALREADY LOGGED IN
+        // ============================================
+        
+        // When page loads, check if user is already logged in
+        // If yes, redirect to dashboard immediately
+        window.addEventListener('load', () => {
+            if (isLoggedIn()) {
+                // User is already logged in, skip login page
+                window.location.href = 'dashboard.html';
+            }
+        });
+
+        // ============================================
+        // GET FORM ELEMENTS
+        // ============================================
+        
+        // document.getElementById() finds HTML element by its id
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('loginButton');
+        const errorMessage = document.getElementById('errorMessage');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const signupLink = document.getElementById('signupLink');
+
+        // ============================================
+        // HANDLE FORM SUBMISSION
+        // ============================================
+        
+        // addEventListener() listens for when user submits the form
+        // 'submit' event fires when user clicks button or presses Enter
+        loginForm.addEventListener('submit', async (event) => {
+            // event.preventDefault() stops the form from reloading the page
+            event.preventDefault();
+            
+            // Get values from input fields
+            // .value gets the text user typed
+            // .trim() removes extra spaces from beginning/end
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            // Validate inputs are not empty
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return; // Stop here if validation fails
+            }
+
+            // Disable button to prevent multiple clicks
+            loginButton.disabled = true;
+            
+            // Hide any previous error messages
+            hideError();
+            
+            // Show loading message
+            showLoading();
+
+            try {
+                // Call login() function from api.js
+                // await pauses execution until login completes
+                const result = await login(username, password);
+                
+                // If we reach here, login was successful
+                console.log('Login successful:', result);
+                
+                // Redirect to dashboard
+                window.location.href = 'dashboard.html';
+                
+            } catch (error) {
+                // If login fails, show error message
+                console.error('Login failed:', error);
+                showError(error.message || 'Login failed. Please try again.');
+                
+                // Re-enable button so user can try again
+                loginButton.disabled = false;
+            } finally {
+                // Hide loading message (runs whether success or failure)
+                hideLoading();
+            }
+        });
+
+        // ============================================
+        // HELPER FUNCTIONS FOR UI
+        // ============================================
+        
+        /**
+         * Show error message to user
+         * @param {string} message - Error text to display
+         */
+        function showError(message) {
+            // Set the error text
+            errorMessage.textContent = message;
+            // Make error div visible
+            errorMessage.style.display = 'block';
+        }
+
+        /**
+         * Hide error message
+         */
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        /**
+         * Show loading indicator
+         */
+        function showLoading() {
+            loadingMessage.style.display = 'block';
+        }
+
+        /**
+         * Hide loading indicator
+         */
+        function hideLoading() {
+            loadingMessage.style.display = 'none';
+        }
+
+        // ============================================
+        // SIGNUP LINK (PLACEHOLDER)
+        // ============================================
+        
+        signupLink.addEventListener('click', (event) => {
+            // Prevent default link behavior
+            event.preventDefault();
+            
+            // For now, just alert user
+            // Later, you can create signup.html page
+            alert('Signup feature coming soon! For now, use the /public/create-user API endpoint.');
+        });
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        
+        // Allow Enter key to submit from any field
+        usernameInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                loginForm.requestSubmit(); // Trigger form submission
+            }
+        });
+
+        passwordInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                loginForm.requestSubmit();
+            }
+        });
+    </script>
+
+    <!-- Dark Mode Toggle Button -->
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+    <span id="themeIcon">🌙</span>
+</button>
+
+<script>
+    // Dark mode toggle script
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Update icon
+        document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    }
+
+    // Load saved theme on page load
+    (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        // Set correct icon
+        const themeIcon = document.getElementById('themeIcon');
+        if (themeIcon) {
+            themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        }
+    })();
+</script>
+</body>
+</html>
