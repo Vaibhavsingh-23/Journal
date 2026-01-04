@@ -1,22 +1,40 @@
 📔 AI-Powered Journal Application
 
-A secure journaling application built using Spring Boot and Google Gemini AI that analyzes journal entries to detect mood, emotions, sentiment, and provides AI-generated summaries and motivational insights.
+A secure journaling application built with Spring Boot and Google Gemini AI.
+The system analyzes journal entries to detect mood, emotions, and sentiment, and provides AI-generated summaries and motivational insights.
 
 ✨ Features
+Core Features
 
 Secure user authentication (Spring Security – Basic Auth)
 
-Role-based access (USER / ADMIN)
+Role-based access control (USER / ADMIN)
 
-CRUD operations on journal entries
+Create, read, update, and delete journal entries
 
 User-specific data isolation
 
-AI-based mood detection & sentiment analysis
+AI Features
 
-AI summary and motivational feedback
+Automatic mood detection
 
-Admin user management
+Emotion extraction from journal text
+
+Sentiment score generation
+
+AI-generated summaries
+
+Personalized motivational feedback
+
+Re-analysis of existing entries
+
+Admin Features
+
+View all registered users
+
+Create admin accounts
+
+System-level user management
 
 🏗️ Project Structure
 Journal/
@@ -25,52 +43,94 @@ Journal/
 
 🛠️ Tech Stack
 
-Backend: Java 17, Spring Boot, Spring Security
+Backend
 
-Database: MongoDB Atlas
+Java 17
 
-AI: Google Gemini API
+Spring Boot
 
-Frontend: HTML, CSS, JavaScript
+Spring Security
+
+Database
+
+MongoDB Atlas
+
+AI
+
+Google Gemini API
+
+Frontend
+
+HTML
+
+CSS
+
+JavaScript
 
 ⚙️ Run Locally (Backend)
 mvn clean install
 mvn spring-boot:run
 
 
-Server runs at:
+Application runs at:
 
 http://localhost:8080
 
+🌐 Frontend Pages
+
+Open frontend files directly in a browser:
+
+Login Page: frontend/loginpage.html
+
+Dashboard: frontend/dashboard.html
+
+Create Entry: frontend/create-entry.html
+
+Admin Dashboard: frontend/admin.html
+
+ℹ️ Frontend communicates with backend via REST APIs using JavaScript fetch.
+
 🔌 API Highlights
 Method	Endpoint	Description
-POST	/public/create-user	Register user
-GET	/journal	Get user journals
-POST	/journal	Create entry with AI
-PUT	/journal/id/{id}	Update entry
-DELETE	/journal/id/{id}	Delete entry
-POST	/journal/reanalyze/{id}	Re-analyze AI
-GET	/admin/all-user	Admin: all users
+POST	/public/create-user	Register new user
+GET	/journal	Get user journal entries
+POST	/journal	Create entry with AI analysis
+PUT	/journal/id/{id}	Update journal entry
+DELETE	/journal/id/{id}	Delete journal entry
+POST	/journal/reanalyze/{id}	Re-run AI analysis
+GET	/admin/all-user	View all users (ADMIN)
 📸 Screenshots
+🔐 Login Page
 
-### Login Page
-![Login](screenshots/login.png)
+📊 Dashboard
 
-### Dashboard
-![Dashboard](screenshots/dashboard.png)
+✍️ Create Journal Entry
 
-### AI Analysis Output
-![AI Analysis](screenshots/ai-analysis.png)
-
-
+🛠️ Admin Dashboard
 
 🔐 Security
 
 BCrypt password encryption
 
+HTTP Basic Authentication
+
 Role-based authorization
 
-Users can access only their own data
+Users can access only their own journal entries
+
+🚀 Future Enhancements
+
+React-based frontend
+
+Mood analytics dashboard
+
+Journal export (PDF)
+
+Image attachments
+
+Search & filtering
+
+Dark mode
 
 👤 Author
 
