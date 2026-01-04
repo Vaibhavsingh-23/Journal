@@ -64,7 +64,7 @@ Journal/
 ```bash
 mvn clean install
 mvn spring-boot:run
-
+```
 🌐 Frontend Pages
 ---
 
