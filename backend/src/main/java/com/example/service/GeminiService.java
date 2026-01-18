@@ -3,19 +3,28 @@ package com.example.service;
 import com.example.dto.GeminiRequest;
 import com.example.dto.GeminiResponse;
 import com.example.dto.JournalAnalysis;
+import com.example.dto.WeeklyAiReflection;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import com.example.dto.WeeklyAiReflection;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+
+import java.util.List;
 
 @Service
 @Slf4j
-public class GeminiService {
+public class  GeminiService {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -162,4 +171,71 @@ public class GeminiService {
         analysis.setSentimentScore(0.0);
         return analysis;
     }
+
+    public WeeklyAiReflection generateWeeklyReflection(String weeklySignal) {
+
+        try {
+            String prompt = """
+                    You are an assistant that writes a neutral weekly reflection for a journaling app.
+                    
+                    Rules:
+                    - Do NOT address the user directly
+                    - Do NOT give productivity or medical advice
+                    - Keep tone neutral and reflective
+                    
+                    Tasks:
+                    1. Write a short weekly reflection (3–4 sentences)
+                    2. Identify emotional trend: IMPROVING, DECLINING, or MIXED
+                    3. Suggest ONE gentle emotional reflection step
+                    
+                    Return STRICT JSON in this format:
+                    {
+                      "reflectionText": "...",
+                      "trend": "IMPROVING | DECLINING | MIXED",
+                      "suggestion": "..."
+                    }
+                    
+                    Weekly data:
+                    %s
+                    """.formatted(weeklySignal);
+
+            GeminiRequest request = GeminiRequest.create(prompt);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<GeminiRequest> entity = new HttpEntity<>(request, headers);
+            String urlWithKey = apiUrl + "?key=" + apiKey;
+
+            log.info("Calling Gemini API for weekly reflection...");
+
+            ResponseEntity<GeminiResponse> response = restTemplate.exchange(
+                    urlWithKey,
+                    HttpMethod.POST,
+                    entity,
+                    GeminiResponse.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                String generatedText = response.getBody().getGeneratedText();
+                return objectMapper.readValue(generatedText, WeeklyAiReflection.class);
+            }
+
+            throw new RuntimeException("Gemini weekly reflection failed");
+
+        } catch (Exception e) {
+            log.error("Weekly AI reflection failed", e);
+            throw new RuntimeException("Weekly AI reflection failed", e);
+        }
+    }
+
+
+
+    @Deprecated
+    public String generateWeeklySummaryFromDailySummaries(List<String> dailySummaries) {
+        // TODO: Implement weekly AI summary using Gemini
+        return String.join(" ", dailySummaries);
+    }
+
+
 }

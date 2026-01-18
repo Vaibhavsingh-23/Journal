@@ -28,6 +28,9 @@ public class JournalEntryService {
     @Autowired
     private GeminiService geminiService;
 
+    @Autowired
+    private UserProgressCommandService userProgressService;
+
     /**
      * Save journal entry with AI analysis
      * This method now includes automatic sentiment analysis using Gemini API
@@ -73,7 +76,8 @@ public class JournalEntryService {
             // Step 4: Add to user's journal list
             user.getJournalEntries().add(saved);
             userService.saveUser(user);
-
+            // Step 5: Update user progress & streaks  ✅ ADD THIS
+            userProgressService.updateProgressOnNewEntry(user.get_id());
             log.info("Journal entry saved successfully with ID: {}", saved.getId());
 
         } catch (Exception e) {
@@ -88,6 +92,7 @@ public class JournalEntryService {
     public void saveEntry(JournalEntry journalEntry) {
         try {
             journalEntryRepository.save(journalEntry);
+
         } catch (Exception e) {
             log.error("Exception while saving journal entry", e);
         }

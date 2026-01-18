@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Data
 public class JournalEntryDTO {
 
-    private String id;   // ✅ STRING, not ObjectId
+    private String id;   //
     private String title;
     private String content;
     private LocalDateTime date;

@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.dto.UserPreferencesUpdateRequest;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.service.UserService;
@@ -7,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -38,5 +41,20 @@ public class UserController {
         userRepository.deleteByUserName(authentication.getName());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
+    }
+    @PutMapping("/preferences")
+    public void updatePreferences(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody UserPreferencesUpdateRequest request
+    ) {
+        User user = userService.findByUserName(userDetails.getUsername());
+
+        userService.updateUserPreferences(
+                user,
+                request.getEmail(),
+                request.getWeeklySummaryEnabled(),
+                request.getWeeklySummaryDay(),
+                request.getEmailNotificationsEnabled()
+        );
     }
 }

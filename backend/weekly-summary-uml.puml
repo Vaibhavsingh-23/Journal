@@ -1,0 +1,173 @@
+@startuml
+
+' =========================
+' USER & PREFERENCES
+' =========================
+class User {
+  ObjectId id
+  String userName
+  String password
+  String email
+  List<String> roles
+  UserPreferences preferences
+  LocalDate lastWeeklySummaryDate
+}
+
+class UserPreferences {
+  boolean weeklySummaryEnabled
+  Integer weeklySummaryDay
+  boolean emailNotificationsEnabled
+}
+
+User "1" *-- "1" UserPreferences
+
+' =========================
+' JOURNAL
+' =========================
+class JournalEntry {
+  ObjectId id
+  String title
+  String content
+  LocalDateTime date
+  String mood
+  String aiSummary
+  Double sentimentScore
+}
+
+User "1" o-- "*" JournalEntry
+
+' =========================
+' WEEKLY SUMMARY
+' =========================
+class WeeklySummary {
+  ObjectId id
+  ObjectId userId
+  LocalDate weekStartDate
+  LocalDate weekEndDate
+  WeeklySummaryType type
+  String summaryText
+  String mood
+  int daysWritten
+  WeeklySummaryDeliveryStatus deliveryStatus
+  LocalDateTime generatedAt
+}
+
+enum WeeklySummaryType {
+  MOTIVATION
+  SUMMARY
+  AI_REFLECTION
+}
+
+enum WeeklySummaryDeliveryStatus {
+  DASHBOARD_ONLY
+  EMAIL_PENDING
+  SENT
+}
+
+' =========================
+' DTOs (READ MODELS)
+' =========================
+class WeeklySummaryBaseData {
+  boolean hasEntries
+  int daysWritten
+  String dominantMood
+  List<String> dailyAiSummaries
+  List<JournalEntry> journalEntries
+}
+
+class WeeklyAiReflection {
+  String reflectionText
+  String trend
+  String suggestion
+}
+
+class UserProgressDTO {
+  int currentStreak
+  int longestStreak
+  int weeklyEntryCount
+  int totalEntries
+  LocalDate lastEntryDate
+}
+
+' =========================
+' SERVICES (COMMAND)
+' =========================
+class WeeklySummaryCommandService {
+  generateWeeklySummary(User)
+}
+
+class EmailDeliveryService {
+  deliverIfEligible(User, WeeklySummary)
+}
+
+class GeminiService {
+  analyzeJournalEntry(String)
+  generateWeeklyReflection(String)
+}
+
+class UserService {
+  findByUserName(String)
+  saveUser(User)
+}
+
+' =========================
+' SERVICES (QUERY)
+' =========================
+class WeeklySummaryQueryService {
+  fetchWeeklyBaseData(ObjectId)
+}
+
+class WeeklySummaryDashboardQueryService {
+  getLatestWeeklySummary(ObjectId)
+}
+
+class UserProgressReadService {
+  getProgressForUser(ObjectId)
+}
+
+' =========================
+' CONTROLLERS
+' =========================
+class DashboardController {
+  getProgress()
+  getWeeklySummary()
+}
+
+class UserController {
+  updatePreferences()
+}
+
+class WeeklySummaryTestController {
+  generateWeeklySummaryForCurrentUser()
+}
+
+' =========================
+' REPOSITORIES
+' =========================
+class WeeklySummaryRepository
+class UserRepository
+
+' =========================
+' RELATIONSHIPS
+' =========================
+DashboardController --> UserService
+DashboardController --> WeeklySummaryDashboardQueryService
+DashboardController --> UserProgressReadService
+
+WeeklySummaryTestController --> WeeklySummaryCommandService
+WeeklySummaryTestController --> UserService
+
+UserController --> UserService
+
+WeeklySummaryCommandService --> WeeklySummaryQueryService
+WeeklySummaryCommandService --> WeeklySummaryRepository
+WeeklySummaryCommandService --> GeminiService
+WeeklySummaryCommandService --> EmailDeliveryService
+WeeklySummaryCommandService --> UserService
+
+WeeklySummaryQueryService --> JournalEntry
+WeeklySummaryDashboardQueryService --> WeeklySummaryRepository
+
+EmailDeliveryService --> WeeklySummaryRepository
+
+@enduml
