@@ -1,0 +1,590 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "Journal App API with AI Analysis",
+        "description": "REST API for journaling application with Gemini AI sentiment analysis",
+        "contact": {
+            "name": "Your Name",
+            "email": "your.email@example.com"
+        },
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080/journal",
+            "description": "Generated server url"
+        }
+    ],
+    "security": [
+        {
+            "basicAuth": []
+        }
+    ],
+    "paths": {
+        "/user": {
+            "put": {
+                "tags": [
+                    "user-controller"
+                ],
+                "operationId": "updateUser",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/User"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "user-controller"
+                ],
+                "operationId": "deleteUserById",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/preferences": {
+            "put": {
+                "tags": [
+                    "user-controller"
+                ],
+                "operationId": "updatePreferences",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserPreferencesUpdateRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/journal/id/{myId}": {
+            "get": {
+                "tags": [
+                    "journal-entry-controllerv-2"
+                ],
+                "operationId": "getJournalEntryById",
+                "parameters": [
+                    {
+                        "name": "myId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "journal-entry-controllerv-2"
+                ],
+                "operationId": "updateJournalentry",
+                "parameters": [
+                    {
+                        "name": "myId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JournalEntry"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "journal-entry-controllerv-2"
+                ],
+                "operationId": "deleteJournalEntryById",
+                "parameters": [
+                    {
+                        "name": "myId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/public/create-user": {
+            "post": {
+                "tags": [
+                    "public-controller"
+                ],
+                "operationId": "createUser",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/User"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/journal": {
+            "get": {
+                "tags": [
+                    "journal-entry-controllerv-2"
+                ],
+                "operationId": "getAllJournalEntriesOfUser",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "journal-entry-controllerv-2"
+                ],
+                "operationId": "createEntry",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JournalEntry"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JournalEntry"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/journal/reanalyze/{myId}": {
+            "post": {
+                "tags": [
+                    "journal-entry-controllerv-2"
+                ],
+                "operationId": "reanalyzeEntry",
+                "parameters": [
+                    {
+                        "name": "myId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/test/weekly-summary": {
+            "post": {
+                "tags": [
+                    "weekly-summary-test-controller"
+                ],
+                "operationId": "generateWeeklySummaryForCurrentUser",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/create-admin-user": {
+            "post": {
+                "tags": [
+                    "admin-controller"
+                ],
+                "operationId": "createUser_1",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/User"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/public/health-check": {
+            "get": {
+                "tags": [
+                    "public-controller"
+                ],
+                "operationId": "healthCheck",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dashboard/weekly-summary": {
+            "get": {
+                "tags": [
+                    "dashboard-controller"
+                ],
+                "operationId": "getWeeklySummary",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dashboard/progress": {
+            "get": {
+                "tags": [
+                    "dashboard-controller"
+                ],
+                "operationId": "getProgress",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserProgressDTO"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/all-user": {
+            "get": {
+                "tags": [
+                    "admin-controller"
+                ],
+                "operationId": "getAllUsers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "JournalEntry": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "$ref": "#/components/schemas/ObjectId"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "mood": {
+                        "type": "string"
+                    },
+                    "emotions": {
+                        "type": "string"
+                    },
+                    "aiSummary": {
+                        "type": "string"
+                    },
+                    "motivationalThought": {
+                        "type": "string"
+                    },
+                    "sentimentScore": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "analysisCompleted": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "ObjectId": {
+                "type": "object",
+                "properties": {
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "User": {
+                "type": "object",
+                "properties": {
+                    "get_id": {
+                        "$ref": "#/components/schemas/ObjectId"
+                    },
+                    "userName": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "journalEntries": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JournalEntry"
+                        }
+                    },
+                    "preferences": {
+                        "$ref": "#/components/schemas/UserPreferences"
+                    },
+                    "lastWeeklySummaryDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "objectId": {
+                        "$ref": "#/components/schemas/ObjectId"
+                    }
+                }
+            },
+            "UserPreferences": {
+                "type": "object",
+                "properties": {
+                    "weeklySummaryEnabled": {
+                        "type": "boolean"
+                    },
+                    "weeklySummaryDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "emailNotificationsEnabled": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "UserPreferencesUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string"
+                    },
+                    "weeklySummaryEnabled": {
+                        "type": "boolean"
+                    },
+                    "weeklySummaryDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "emailNotificationsEnabled": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "UserProgressDTO": {
+                "type": "object",
+                "properties": {
+                    "currentStreak": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "longestStreak": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "weeklyEntryCount": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "totalEntries": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "lastEntryDate": {
+                        "type": "string",
+                        "format": "date"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "basicAuth": {
+                "type": "http",
+                "scheme": "basic"
+            }
+        }
+    }
+}
