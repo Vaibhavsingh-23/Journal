@@ -2,3 +2,4 @@
 logs/
 target/
 *.log
+.env
