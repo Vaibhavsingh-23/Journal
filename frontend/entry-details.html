@@ -13,7 +13,10 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-left">
-                <h1 class="nav-title">📔 Entry Details</h1>
+                <h1 class="nav-title">
+                    <img src="../icons/journal.png" alt="Journal" class="nav-icon">
+                    Entry Details
+                </h1>
             </div>
             <div class="nav-right">
                 <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">
@@ -100,39 +103,11 @@
                 <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
                     ← Back to Dashboard
                 </button>
-                <button class="btn btn-secondary" id="editBtn">
-                    ✏️ Edit Entry
-                </button>
                 <button class="btn btn-secondary" id="reanalyzeBtn">
                     🔄 Re-analyze
                 </button>
-                <button class="btn btn-danger" id="deleteBtn">
-                    🗑️ Delete Entry
-                </button>
             </div>
 
-            <!-- Edit Form (hidden by default) -->
-            <div id="editForm" class="edit-form-container" style="display: none;">
-                <h3>✏️ Edit Entry</h3>
-                <form id="entryEditForm">
-                    <div class="form-group">
-                        <label for="editTitle">Title</label>
-                        <input type="text" id="editTitle" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="editContent">Content</label>
-                        <textarea id="editContent" class="form-textarea" rows="10" required></textarea>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">
-                            💾 Save Changes
-                        </button>
-                        <button type="button" class="btn btn-secondary" id="cancelEditBtn">
-                            ❌ Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
 
         </div>
     </div>
@@ -173,14 +148,7 @@
         const loadingSpinner = document.getElementById('loadingSpinner');
         const errorContainer = document.getElementById('errorContainer');
         const entryContainer = document.getElementById('entryContainer');
-        const editBtn = document.getElementById('editBtn');
         const reanalyzeBtn = document.getElementById('reanalyzeBtn');
-        const deleteBtn = document.getElementById('deleteBtn');
-        const editForm = document.getElementById('editForm');
-        const entryEditForm = document.getElementById('entryEditForm');
-        const cancelEditBtn = document.getElementById('cancelEditBtn');
-        const editTitle = document.getElementById('editTitle');
-        const editContent = document.getElementById('editContent');
 
         // Store current entry data
         let currentEntry = null;
@@ -296,78 +264,11 @@
                 entry.motivationalThought || 'Keep journaling!';
         }
 
+
+
         // ============================================
         // BUTTON ACTIONS
         // ============================================
-
-        /**
-         * Edit button click
-         */
-        editBtn.addEventListener('click', () => {
-            if (!currentEntry) return;
-
-            // Populate edit form
-            editTitle.value = currentEntry.title;
-            editContent.value = currentEntry.content;
-
-            // Show edit form, hide display
-            editForm.style.display = 'block';
-            document.getElementById('entryContent').parentElement.style.display = 'none';
-            document.getElementById('analysisSection').style.display = 'none';
-        });
-
-        /**
-         * Cancel edit button
-         */
-        cancelEditBtn.addEventListener('click', () => {
-            // Hide edit form, show display
-            editForm.style.display = 'none';
-            document.getElementById('entryContent').parentElement.style.display = 'block';
-            document.getElementById('analysisSection').style.display = 'block';
-        });
-
-        /**
-         * Save edit form
-         */
-        entryEditForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const saveBtn = entryEditForm.querySelector('button[type="submit"]');
-            saveBtn.disabled = true;
-            saveBtn.textContent = '💾 Saving...';
-
-            try {
-                // Update entry
-                const updatedEntry = await updateEntry(
-                    entryId,
-                    editTitle.value,
-                    editContent.value
-                );
-
-                // Update current entry
-                currentEntry = updatedEntry;
-
-                // Hide edit form
-                editForm.style.display = 'none';
-
-                // Reload entry display
-                displayEntry(updatedEntry);
-
-                // Show sections again
-                document.getElementById('entryContent').parentElement.style.display = 'block';
-                document.getElementById('analysisSection').style.display = 'block';
-
-                // Show success
-                showSuccess('Entry updated successfully!');
-
-            } catch (error) {
-                console.error('Error updating entry:', error);
-                showError('Failed to update entry. Please try again.');
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.textContent = '💾 Save Changes';
-            }
-        });
 
         /**
          * Re-analyze button click
@@ -399,34 +300,6 @@
             }
         });
 
-        /**
-         * Delete button click
-         */
-        deleteBtn.addEventListener('click', async () => {
-            if (!confirm('Are you sure you want to delete this entry? This cannot be undone.')) {
-                return;
-            }
-
-            deleteBtn.disabled = true;
-            deleteBtn.textContent = '🗑️ Deleting...';
-
-            try {
-                // Delete entry
-                await deleteEntry(entryId);
-
-                // Show success and redirect
-                alert('Entry deleted successfully!');
-                window.location.href = 'dashboard.html';
-
-            } catch (error) {
-                console.error('Error deleting:', error);
-                showError('Failed to delete entry.');
-                deleteBtn.disabled = false;
-                deleteBtn.textContent = '🗑️ Delete Entry';
-            }
-        });
-
-        // ============================================
         // HELPER FUNCTIONS
         // ============================================
 

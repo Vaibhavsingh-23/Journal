@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create New Entry - Journal App</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <!-- Navigation bar -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-left">
-                <h1 class="nav-title">📔 Create New Entry</h1>
+                <h1 class="nav-title">
+                    <img src="../icons/journal.png" alt="Journal" class="nav-icon">
+                    Create New Entry
+                </h1>
             </div>
             <div class="nav-right">
                 <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">
@@ -25,32 +30,23 @@
         <!-- Form for creating entry -->
         <div class="create-entry-container">
             <form id="createEntryForm" onsubmit="return false;">
-                
+
                 <!-- Title input -->
                 <div class="form-group">
                     <label for="entryTitle">Entry Title</label>
-                    <input 
-                        type="text" 
-                        id="entryTitle" 
-                        placeholder="Give your entry a title..." 
-                        required
-                        maxlength="100"
-                    >
+                    <input type="text" id="entryTitle" placeholder="Give your entry a title..." required
+                        maxlength="100">
                     <small class="form-hint">Maximum 100 characters</small>
                 </div>
 
                 <!-- Content textarea -->
                 <div class="form-group">
                     <label for="entryContent">Your Thoughts</label>
-                    <textarea 
-                        id="entryContent" 
-                        rows="12" 
-                        placeholder="Write about your day, your feelings, your thoughts..." 
-                        required
-                        maxlength="5000"
-                    ></textarea>
+                    <textarea id="entryContent" rows="12"
+                        placeholder="Write about your day, your feelings, your thoughts..." required
+                        maxlength="5000"></textarea>
                     <small class="form-hint">
-                        Maximum 5000 characters • 
+                        Maximum 5000 characters •
                         <span id="charCount">0</span> characters used
                     </small>
                 </div>
@@ -76,7 +72,7 @@
             <!-- AI Analysis Result (shown after creation) -->
             <div id="analysisResult" class="analysis-result" style="display: none;">
                 <h3>✨ AI Analysis Complete!</h3>
-                
+
                 <div class="analysis-grid">
                     <!-- Mood -->
                     <div class="analysis-card">
@@ -125,12 +121,12 @@
 
     <!-- Include JavaScript -->
     <script src="js/api.js"></script>
-    
+
     <script>
         // ============================================
         // AUTHENTICATION CHECK
         // ============================================
-        
+
         if (!isLoggedIn()) {
             window.location.href = 'index.html';
         }
@@ -138,7 +134,7 @@
         // ============================================
         // GET PAGE ELEMENTS
         // ============================================
-        
+
         const createEntryForm = document.getElementById('createEntryForm');
         const entryTitle = document.getElementById('entryTitle');
         const entryContent = document.getElementById('entryContent');
@@ -151,12 +147,12 @@
         // ============================================
         // CHARACTER COUNTER
         // ============================================
-        
+
         // Update character count as user types
         entryContent.addEventListener('input', () => {
             const length = entryContent.value.length;
             charCount.textContent = length;
-            
+
             // Change color if approaching limit
             if (length > 4500) {
                 charCount.style.color = 'red';
@@ -170,10 +166,10 @@
         // ============================================
         // FORM SUBMISSION
         // ============================================
-        
+
         createEntryForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            
+
             // Get form values
             const title = entryTitle.value.trim();
             const content = entryContent.value.trim();
@@ -199,15 +195,15 @@
                 // This will trigger AI analysis on backend
                 console.log('Creating entry...');
                 const createdEntry = await createEntry(title, content);
-                
+
                 console.log('Entry created with AI analysis:', createdEntry);
-                
+
                 // Hide loading
                 hideLoading();
-                
+
                 // Display AI analysis results
                 displayAnalysisResult(createdEntry);
-                
+
             } catch (error) {
                 console.error('Error creating entry:', error);
                 hideLoading();
@@ -219,7 +215,7 @@
         // ============================================
         // DISPLAY AI ANALYSIS RESULT
         // ============================================
-        
+
         /**
          * Display AI analysis results after entry creation
          * @param {Object} entry - Created journal entry with AI analysis
@@ -227,33 +223,33 @@
         function displayAnalysisResult(entry) {
             // Hide the form
             createEntryForm.style.display = 'none';
-            
+
             // Show analysis result
             analysisResult.style.display = 'block';
-            
+
             // Populate analysis data
-            
+
             // Mood
             const moodEmoji = getMoodEmoji(entry.mood);
-            document.getElementById('resultMood').innerHTML = 
+            document.getElementById('resultMood').innerHTML =
                 `<span class="mood-badge ${getMoodClass(entry.mood)}">${moodEmoji} ${entry.mood || 'Unknown'}</span>`;
-            
+
             // Emotions
             document.getElementById('resultEmotions').textContent = entry.emotions || 'N/A';
-            
+
             // Sentiment Score
             const sentimentScore = entry.sentimentScore || 0;
             document.getElementById('resultSentiment').textContent = sentimentScore.toFixed(2);
-            
+
             // Sentiment Bar
             const sentimentPercent = ((sentimentScore + 1) / 2) * 100;
             const sentimentColor = getSentimentColor(sentimentScore);
-            document.getElementById('resultSentimentBar').innerHTML = 
+            document.getElementById('resultSentimentBar').innerHTML =
                 `<div class="sentiment-fill ${sentimentColor}" style="width: ${sentimentPercent}%"></div>`;
-            
+
             // Summary
             document.getElementById('resultSummary').textContent = entry.aiSummary || 'No summary available';
-            
+
             // Motivational Thought
             document.getElementById('resultMotivation').textContent = entry.motivationalThought || 'Keep journaling!';
         }
@@ -261,7 +257,7 @@
         // ============================================
         // HELPER FUNCTIONS
         // ============================================
-        
+
         /**
          * Get emoji for mood
          */
@@ -345,10 +341,10 @@
         // ============================================
         // AUTO-SAVE TO LOCALSTORAGE (DRAFT)
         // ============================================
-        
+
         // Save draft to localStorage as user types
         let saveTimeout;
-        
+
         function saveDraft() {
             const draft = {
                 title: entryTitle.value,
@@ -376,12 +372,12 @@
             if (draftJson) {
                 try {
                     const draft = JSON.parse(draftJson);
-                    
+
                     // Ask user if they want to restore draft
                     if (confirm('Found a saved draft. Would you like to restore it?')) {
                         entryTitle.value = draft.title || '';
                         entryContent.value = draft.content || '';
-                        
+
                         // Update character count
                         charCount.textContent = entryContent.value.length;
                     }
@@ -401,35 +397,36 @@
     </script>
 
     <!-- Dark Mode Toggle Button -->
-<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-    <span id="themeIcon">🌙</span>
-</button>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <span id="themeIcon">🌙</span>
+    </button>
 
-<script>
-    // Dark mode toggle script
-    function toggleTheme() {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        // Update icon
-        document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-    }
+    <script>
+        // Dark mode toggle script
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-    // Load saved theme on page load
-    (function() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        // Set correct icon
-        const themeIcon = document.getElementById('themeIcon');
-        if (themeIcon) {
-            themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Update icon
+            document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
         }
-    })();
-</script>
+
+        // Load saved theme on page load
+        (function () {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // Set correct icon
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) {
+                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            }
+        })();
+    </script>
 </body>
+
 </html>

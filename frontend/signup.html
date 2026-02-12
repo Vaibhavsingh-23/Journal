@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - Journal App</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <div class="container">
         <div class="login-card">
-            <h1 class="app-title">📔 Journal App</h1>
+            <h1 class="app-title">
+                <img src="icons/journal.png" alt="Journal" class="app-icon">
+                Journal App
+            </h1>
             <h2 class="page-title">Create Account</h2>
-            
+
             <form id="signupForm" onsubmit="handleSignup(event)">
                 <div class="form-group">
                     <label for="username">Username</label>
@@ -37,7 +42,7 @@
             </form>
 
             <p class="signup-text">
-                Already have an account? 
+                Already have an account?
                 <a href="index.html">Login</a>
             </p>
         </div>
@@ -109,16 +114,16 @@
             } catch (error) {
                 loadingMessage.style.display = 'none';
                 signupBtn.disabled = false;
-                
+
                 // Handle specific errors
                 let errorMsg = 'Failed to create account. Please try again.';
-                
+
                 if (error.message.includes('duplicate') || error.message.includes('exists')) {
                     errorMsg = 'Username already exists. Please choose a different username.';
                 } else if (error.message.includes('invalid')) {
                     errorMsg = 'Invalid username or password format.';
                 }
-                
+
                 showError(errorMsg);
             }
         }
@@ -131,35 +136,36 @@
     </script>
 
     <!-- Dark Mode Toggle Button -->
-<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-    <span id="themeIcon">🌙</span>
-</button>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <span id="themeIcon">🌙</span>
+    </button>
 
-<script>
-    // Dark mode toggle script
-    function toggleTheme() {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        // Update icon
-        document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-    }
+    <script>
+        // Dark mode toggle script
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-    // Load saved theme on page load
-    (function() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        // Set correct icon
-        const themeIcon = document.getElementById('themeIcon');
-        if (themeIcon) {
-            themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Update icon
+            document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
         }
-    })();
-</script>
+
+        // Load saved theme on page load
+        (function () {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // Set correct icon
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) {
+                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            }
+        })();
+    </script>
 </body>
+
 </html>

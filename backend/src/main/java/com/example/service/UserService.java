@@ -1,5 +1,4 @@
 
-
 package com.example.service;
 
 import com.example.entity.User;
@@ -21,8 +20,8 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    //private static final Logger logger =  LoggerFactory.getLogger(UserService.class);
-
+    // private static final Logger logger =
+    // LoggerFactory.getLogger(UserService.class);
 
     private static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -41,10 +40,8 @@ public class UserService {
                 user.setPreferences(prefs);
             } else if (user.getPreferences().getWeeklySummaryDay() == null) {
                 user.getPreferences().setWeeklySummaryDay(
-                        java.time.DayOfWeek.MONDAY.getValue()
-                );
+                        java.time.DayOfWeek.MONDAY.getValue());
             }
-
 
             userRepository.save(user);
         } catch (Exception e) {
@@ -52,11 +49,9 @@ public class UserService {
         }
     }
 
-
     public void saveUser(User user) {
         userRepository.save(user);
     }
-
 
     public List<User> getAll() {
         return userRepository.findAll();
@@ -72,21 +67,41 @@ public class UserService {
 
     public void saveAdmin(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRoles(Arrays.asList("USER","ADMIN"));
+        user.setRoles(Arrays.asList("USER", "ADMIN"));
         userRepository.save(user);
+    }
+
+    public void updateExistingUser(User user) {
+        // DEBUG: Log roles before encoding password
+        System.out.println("DEBUG updateExistingUser: BEFORE encoding - Username: " + user.getUserName() + ", Roles: "
+                + user.getRoles());
+
+        // Encode password but preserve existing roles
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // DEBUG: Log roles after encoding password
+        System.out.println("DEBUG updateExistingUser: AFTER encoding - Username: " + user.getUserName() + ", Roles: "
+                + user.getRoles());
+
+        userRepository.save(user);
+
+        // DEBUG: Verify what was saved
+        User savedUser = userRepository.findByUserName(user.getUserName());
+        System.out.println("DEBUG updateExistingUser: AFTER save - Username: " + savedUser.getUserName() + ", Roles: "
+                + savedUser.getRoles());
     }
 
     public List<User> findUsersForWeeklySummary(int day) {
         return userRepository
                 .findByPreferencesWeeklySummaryEnabledTrueAndPreferencesWeeklySummaryDay(day);
     }
+
     public void updateUserPreferences(
             User user,
             String email,
             Boolean weeklySummaryEnabled,
             Integer weeklySummaryDay,
-            Boolean emailNotificationsEnabled
-    ) {
+            Boolean emailNotificationsEnabled) {
         if (email != null) {
             user.setEmail(email);
         }
@@ -111,6 +126,5 @@ public class UserService {
 
         userRepository.save(user);
     }
-
 
 }

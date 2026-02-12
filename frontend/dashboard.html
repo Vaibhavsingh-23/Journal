@@ -14,7 +14,10 @@
         <div class="nav-container">
             <!-- Left side: App title -->
             <div class="nav-left">
-                <h1 class="nav-title">📔 My Journal</h1>
+                <h1 class="nav-title">
+                    <img src="../icons/journal.png" alt="Journal" class="nav-icon">
+                    My Journal
+                </h1>
                 <!-- Display logged in username -->
                 <span class="nav-username" id="navUsername"></span>
             </div>
@@ -23,7 +26,8 @@
             <div class="nav-right">
                 <!-- Admin Dashboard button (only shown to admins) -->
                 <button class="btn btn-secondary" id="adminDashboardBtn" style="display: none;">
-                    👑 Admin
+                    <img src="../icons/administrator.png" alt="Admin" class="btn-icon">
+                    Admin
                 </button>
                 <!-- Button to create new entry -->
                 <button class="btn btn-primary" id="createEntryBtn">
@@ -35,7 +39,8 @@
                 </button>
                 <!-- Logout button -->
                 <button class="btn btn-secondary" id="logoutBtn">
-                    🚪 Logout
+                    <img src="../icons/check-out.png" alt="Logout" class="btn-icon">
+                    Logout
                 </button>
 
             </div>
@@ -412,9 +417,6 @@
                     <button class="btn btn-small btn-primary" onclick="viewEntry('${entryIdString}')">
                         👁️ View
                     </button>
-                    <button class="btn btn-small btn-danger" onclick="confirmDelete('${entryIdString}')">
-                        🗑️ Delete
-                    </button>
                 </div>
             `;
 
@@ -433,36 +435,6 @@
         function viewEntry(entryId) {
             // Redirect to details page with entry ID in URL
             window.location.href = `entry-details.html?id=${entryId}`;
-        }
-
-        /**
-         * Confirm and delete entry
-         * @param {string} entryId - Entry ID to delete
-         */
-        async function confirmDelete(entryId) {
-            // Ask user to confirm deletion
-            if (!confirm('Are you sure you want to delete this entry? This action cannot be undone.')) {
-                return; // User cancelled
-            }
-
-            try {
-                // Show loading
-                showLoading();
-
-                // Call delete API
-                await deleteEntry(entryId);
-
-                // Reload entries to reflect deletion
-                await loadEntries();
-
-                // Show success message
-                showSuccess('Entry deleted successfully!');
-
-            } catch (error) {
-                console.error('Error deleting entry:', error);
-                hideLoading();
-                showError('Failed to delete entry. Please try again.');
-            }
         }
 
         // ============================================

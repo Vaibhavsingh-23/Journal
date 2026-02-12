@@ -71,6 +71,38 @@ body {
 }
 
 /* ============================================
+   ICON STYLES
+   ============================================ */
+
+/* Navigation icons - for title/branding */
+.nav-icon {
+    width: 28px;
+    height: 28px;
+    vertical-align: middle;
+    margin-right: 8px;
+    object-fit: contain;
+}
+
+/* Button icons - for buttons */
+.btn-icon {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 6px;
+    object-fit: contain;
+}
+
+/* App title icons - larger for login/signup pages */
+.app-icon {
+    width: 40px;
+    height: 40px;
+    vertical-align: middle;
+    margin-right: 10px;
+    object-fit: contain;
+}
+
+
+/* ============================================
    CONTAINERS
    ============================================ */
 

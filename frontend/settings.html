@@ -13,7 +13,10 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-left">
-                <h1 class="nav-title">📔 My Journal</h1>
+                <h1 class="nav-title">
+                    <img src="../icons/journal.png" alt="Journal" class="nav-icon">
+                    My Journal
+                </h1>
                 <span class="nav-username" id="navUsername"></span>
             </div>
             <div class="nav-right">
@@ -93,42 +96,6 @@
                 </form>
             </div>
 
-            <!-- Change Password Section -->
-            <div class="settings-section">
-                <h3>🔒 Change Password</h3>
-                <form id="passwordForm" class="settings-form">
-                    <div class="form-group">
-                        <label for="currentUsername">Username</label>
-                        <input type="text" id="currentUsername" class="form-input" placeholder="Current username"
-                            required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="newPassword">New Password</label>
-                        <input type="password" id="newPassword" class="form-input" placeholder="Enter new password"
-                            required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="confirmPassword">Confirm Password</label>
-                        <input type="password" id="confirmPassword" class="form-input"
-                            placeholder="Confirm new password" required>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">
-                        🔑 Update Password
-                    </button>
-                </form>
-            </div>
-
-            <!-- Danger Zone -->
-            <div class="settings-section danger-zone">
-                <h3>⚠️ Danger Zone</h3>
-                <p>Once you delete your account, there is no going back. Please be certain.</p>
-                <button id="deleteAccountBtn" class="btn btn-danger">
-                    🗑️ Delete Account
-                </button>
-            </div>
 
         </div>
     </div>
@@ -157,19 +124,12 @@
 
         // Forms
         const preferencesForm = document.getElementById('preferencesForm');
-        const passwordForm = document.getElementById('passwordForm');
-        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
 
         // Preference inputs
         const emailInput = document.getElementById('emailInput');
         const weeklySummaryEnabled = document.getElementById('weeklySummaryEnabled');
         const weeklySummaryDay = document.getElementById('weeklySummaryDay');
         const emailNotificationsEnabled = document.getElementById('emailNotificationsEnabled');
-
-        // Password inputs
-        const currentUsername = document.getElementById('currentUsername');
-        const newPassword = document.getElementById('newPassword');
-        const confirmPassword = document.getElementById('confirmPassword');
 
         // ============================================
         // DISPLAY USERNAME
@@ -178,7 +138,6 @@
         const username = getUsername();
         if (username) {
             navUsername.textContent = `Welcome, ${username}!`;
-            currentUsername.value = username;
         }
 
         // ============================================
@@ -222,71 +181,7 @@
             }
         });
 
-        // Change Password
-        passwordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
 
-            // Validate passwords match
-            if (newPassword.value !== confirmPassword.value) {
-                showMessage('Passwords do not match!', 'error');
-                return;
-            }
-
-            if (newPassword.value.length < 4) {
-                showMessage('Password must be at least 4 characters long!', 'error');
-                return;
-            }
-
-            try {
-                showLoading();
-
-                await updateUser(currentUsername.value, newPassword.value);
-
-                hideLoading();
-                showMessage('Password updated successfully! Please login again.', 'success');
-
-                // Logout after 2 seconds
-                setTimeout(() => {
-                    logout();
-                }, 2000);
-
-            } catch (error) {
-                hideLoading();
-                showMessage('Failed to update password. Please try again.', 'error');
-            }
-        });
-
-        // Delete Account
-        deleteAccountBtn.addEventListener('click', async () => {
-            const confirmed = confirm(
-                'Are you absolutely sure you want to delete your account?\n\n' +
-                'This action CANNOT be undone. All your journal entries will be permanently deleted.\n\n' +
-                'Type "DELETE" in the next prompt to confirm.'
-            );
-
-            if (!confirmed) return;
-
-            const confirmText = prompt('Type DELETE to confirm account deletion:');
-
-            if (confirmText !== 'DELETE') {
-                showMessage('Account deletion cancelled.', 'info');
-                return;
-            }
-
-            try {
-                showLoading();
-
-                await deleteUser();
-
-                hideLoading();
-                alert('Your account has been deleted. You will be redirected to the signup page.');
-                window.location.href = 'signup.html';
-
-            } catch (error) {
-                hideLoading();
-                showMessage('Failed to delete account. Please try again.', 'error');
-            }
-        });
 
         // ============================================
         // HELPER FUNCTIONS
