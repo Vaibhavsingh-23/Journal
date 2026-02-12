@@ -11,8 +11,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
-                        // Add your Railway frontend URL here after deployment
-                        "https://your-frontend-url.up.railway.app",
+                        "https://journal-frontend-v45t.onrender.com",
                         "https://your-frontend-url.vercel.app",
                         "http://localhost:5500",
                         "http://localhost:3000",
