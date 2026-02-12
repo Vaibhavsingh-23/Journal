@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - My Journal</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Navigation bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <h1 class="nav-title">📔 My Journal</h1>
+                <span class="nav-username" id="navUsername"></span>
+            </div>
+            <div class="nav-right">
+                <button class="btn btn-secondary" id="dashboardBtn">
+                    🏠 Dashboard
+                </button>
+                <button class="btn btn-secondary" id="logoutBtn">
+                    🚪 Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="container">
+        <div class="dashboard-header">
+            <h2>⚙️ Settings</h2>
+            <p class="subtitle">Manage your preferences and account</p>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Saving...</p>
+        </div>
+
+        <!-- Success/Error messages -->
+        <div id="messageContainer" class="message-container" style="display: none;"></div>
+
+        <!-- Settings Sections -->
+        <div class="settings-container">
+
+            <!-- User Preferences Section -->
+            <div class="settings-section">
+                <h3>📊 Weekly Summary Preferences</h3>
+                <form id="preferencesForm" class="settings-form">
+                    <div class="form-group">
+                        <label for="emailInput">Email Address</label>
+                        <input type="email" id="emailInput" class="form-input" placeholder="your.email@example.com"
+                            required>
+                        <small>Where weekly summaries will be sent</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="weeklySummaryEnabled">
+                            <span>Enable Weekly Summary Emails</span>
+                        </label>
+                        <small>Receive AI-generated weekly summaries via email</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="weeklySummaryDay">Summary Day</label>
+                        <select id="weeklySummaryDay" class="form-input">
+                            <option value="0">Sunday</option>
+                            <option value="1">Monday</option>
+                            <option value="2">Tuesday</option>
+                            <option value="3">Wednesday</option>
+                            <option value="4">Thursday</option>
+                            <option value="5">Friday</option>
+                            <option value="6">Saturday</option>
+                        </select>
+                        <small>Day of the week to receive summary</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="emailNotificationsEnabled">
+                            <span>Enable Email Notifications</span>
+                        </label>
+                        <small>General email notifications</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        💾 Save Preferences
+                    </button>
+                </form>
+            </div>
+
+            <!-- Change Password Section -->
+            <div class="settings-section">
+                <h3>🔒 Change Password</h3>
+                <form id="passwordForm" class="settings-form">
+                    <div class="form-group">
+                        <label for="currentUsername">Username</label>
+                        <input type="text" id="currentUsername" class="form-input" placeholder="Current username"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" class="form-input" placeholder="Enter new password"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="form-input"
+                            placeholder="Confirm new password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        🔑 Update Password
+                    </button>
+                </form>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="settings-section danger-zone">
+                <h3>⚠️ Danger Zone</h3>
+                <p>Once you delete your account, there is no going back. Please be certain.</p>
+                <button id="deleteAccountBtn" class="btn btn-danger">
+                    🗑️ Delete Account
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Include JavaScript -->
+    <script src="js/api.js"></script>
+
+    <script>
+        // ============================================
+        // AUTHENTICATION CHECK
+        // ============================================
+
+        if (!isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+
+        // ============================================
+        // GET PAGE ELEMENTS
+        // ============================================
+
+        const navUsername = document.getElementById('navUsername');
+        const dashboardBtn = document.getElementById('dashboardBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const messageContainer = document.getElementById('messageContainer');
+
+        // Forms
+        const preferencesForm = document.getElementById('preferencesForm');
+        const passwordForm = document.getElementById('passwordForm');
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+
+        // Preference inputs
+        const emailInput = document.getElementById('emailInput');
+        const weeklySummaryEnabled = document.getElementById('weeklySummaryEnabled');
+        const weeklySummaryDay = document.getElementById('weeklySummaryDay');
+        const emailNotificationsEnabled = document.getElementById('emailNotificationsEnabled');
+
+        // Password inputs
+        const currentUsername = document.getElementById('currentUsername');
+        const newPassword = document.getElementById('newPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+
+        // ============================================
+        // DISPLAY USERNAME
+        // ============================================
+
+        const username = getUsername();
+        if (username) {
+            navUsername.textContent = `Welcome, ${username}!`;
+            currentUsername.value = username;
+        }
+
+        // ============================================
+        // BUTTON EVENT LISTENERS
+        // ============================================
+
+        dashboardBtn.addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                logout();
+            }
+        });
+
+        // ============================================
+        // FORM HANDLERS
+        // ============================================
+
+        // Save Preferences
+        preferencesForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            try {
+                showLoading();
+
+                await updatePreferences(
+                    emailInput.value,
+                    weeklySummaryEnabled.checked,
+                    parseInt(weeklySummaryDay.value),
+                    emailNotificationsEnabled.checked
+                );
+
+                hideLoading();
+                showMessage('Preferences saved successfully!', 'success');
+
+            } catch (error) {
+                hideLoading();
+                showMessage('Failed to save preferences. Please try again.', 'error');
+            }
+        });
+
+        // Change Password
+        passwordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Validate passwords match
+            if (newPassword.value !== confirmPassword.value) {
+                showMessage('Passwords do not match!', 'error');
+                return;
+            }
+
+            if (newPassword.value.length < 4) {
+                showMessage('Password must be at least 4 characters long!', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+
+                await updateUser(currentUsername.value, newPassword.value);
+
+                hideLoading();
+                showMessage('Password updated successfully! Please login again.', 'success');
+
+                // Logout after 2 seconds
+                setTimeout(() => {
+                    logout();
+                }, 2000);
+
+            } catch (error) {
+                hideLoading();
+                showMessage('Failed to update password. Please try again.', 'error');
+            }
+        });
+
+        // Delete Account
+        deleteAccountBtn.addEventListener('click', async () => {
+            const confirmed = confirm(
+                'Are you absolutely sure you want to delete your account?\n\n' +
+                'This action CANNOT be undone. All your journal entries will be permanently deleted.\n\n' +
+                'Type "DELETE" in the next prompt to confirm.'
+            );
+
+            if (!confirmed) return;
+
+            const confirmText = prompt('Type DELETE to confirm account deletion:');
+
+            if (confirmText !== 'DELETE') {
+                showMessage('Account deletion cancelled.', 'info');
+                return;
+            }
+
+            try {
+                showLoading();
+
+                await deleteUser();
+
+                hideLoading();
+                alert('Your account has been deleted. You will be redirected to the signup page.');
+                window.location.href = 'signup.html';
+
+            } catch (error) {
+                hideLoading();
+                showMessage('Failed to delete account. Please try again.', 'error');
+            }
+        });
+
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+
+        function showLoading() {
+            loadingSpinner.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loadingSpinner.style.display = 'none';
+        }
+
+        function showMessage(message, type) {
+            messageContainer.textContent = message;
+            messageContainer.className = `message-container message-${type}`;
+            messageContainer.style.display = 'block';
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                messageContainer.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+
+    <!-- Dark Mode Toggle -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <span id="themeIcon">🌙</span>
+    </button>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }
+
+        // Load saved theme
+        (function () {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) {
+                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            }
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Journal - Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <!-- Navigation bar at top -->
     <nav class="navbar">
@@ -16,7 +18,7 @@
                 <!-- Display logged in username -->
                 <span class="nav-username" id="navUsername"></span>
             </div>
-            
+
             <!-- Right side: Action buttons -->
             <div class="nav-right">
                 <!-- Admin Dashboard button (only shown to admins) -->
@@ -27,10 +29,15 @@
                 <button class="btn btn-primary" id="createEntryBtn">
                     ➕ New Entry
                 </button>
+                <!-- Settings button -->
+                <button class="btn btn-secondary" id="settingsBtn">
+                    ⚙️ Settings
+                </button>
                 <!-- Logout button -->
                 <button class="btn btn-secondary" id="logoutBtn">
                     🚪 Logout
                 </button>
+
             </div>
         </div>
     </nav>
@@ -41,6 +48,57 @@
         <div class="dashboard-header">
             <h2>Your Journal Entries</h2>
             <p class="subtitle">Track your thoughts and emotions with AI insights</p>
+        </div>
+
+        <!-- Progress Widget -->
+        <div id="progressWidget" class="progress-widget" style="display: none;">
+            <h3>📊 Your Progress</h3>
+            <div class="progress-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="currentStreak">0</div>
+                        <div class="stat-label">Current Streak</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="longestStreak">0</div>
+                        <div class="stat-label">Longest Streak</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="weeklyCount">0</div>
+                        <div class="stat-label">This Week</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalEntries">0</div>
+                        <div class="stat-label">Total Entries</div>
+                    </div>
+                </div>
+            </div>
+            <div class="last-entry-date">
+                Last entry: <span id="lastEntryDate">Never</span>
+            </div>
+        </div>
+
+        <!-- Weekly Summary Section -->
+        <div id="weeklySummarySection" class="weekly-summary-section" style="display: none;">
+            <div class="weekly-summary-header">
+                <h3>📊 Weekly Summary</h3>
+                <button class="btn btn-small btn-primary" id="generateSummaryBtn">
+                    🔄 Generate Summary
+                </button>
+            </div>
+            <div id="weeklySummaryContent" class="weekly-summary-content">
+                <!-- Summary will be inserted here -->
+            </div>
         </div>
 
         <!-- Loading indicator (shown while fetching entries) -->
@@ -71,14 +129,15 @@
         </div>
     </div>
 
+
     <!-- Include JavaScript files -->
     <script src="js/api.js"></script>
-    
+
     <script>
         // ============================================
         // AUTHENTICATION CHECK
         // ============================================
-        
+
         // Check if user is logged in when page loads
         if (!isLoggedIn()) {
             // Not logged in, redirect to login page
@@ -88,9 +147,10 @@
         // ============================================
         // GET PAGE ELEMENTS
         // ============================================
-        
+
         const navUsername = document.getElementById('navUsername');
         const createEntryBtn = document.getElementById('createEntryBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const adminDashboardBtn = document.getElementById('adminDashboardBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
@@ -101,7 +161,7 @@
         // ============================================
         // DISPLAY USERNAME
         // ============================================
-        
+
         // Get username from localStorage and display it
         const username = getUsername();
         if (username) {
@@ -111,10 +171,15 @@
         // ============================================
         // BUTTON EVENT LISTENERS
         // ============================================
-        
+
         // Create Entry button
         createEntryBtn.addEventListener('click', () => {
             window.location.href = 'create-entry.html';
+        });
+
+        // Settings button
+        settingsBtn.addEventListener('click', () => {
+            window.location.href = 'settings.html';
         });
 
         // Logout button
@@ -133,11 +198,117 @@
         checkIfAdmin();
 
         // ============================================
+        // NEW DASHBOARD ELEMENTS
+        // ============================================
+
+        const progressWidget = document.getElementById('progressWidget');
+        const weeklySummarySection = document.getElementById('weeklySummarySection');
+        const weeklySummaryContent = document.getElementById('weeklySummaryContent');
+        const generateSummaryBtn = document.getElementById('generateSummaryBtn');
+
+        // Generate Summary button
+        generateSummaryBtn.addEventListener('click', async () => {
+            try {
+                showLoading();
+                await generateWeeklySummary();
+                showSuccess('Weekly summary generated successfully!');
+                // Reload weekly summary
+                await loadWeeklySummary();
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                showError('Failed to generate weekly summary. Please try again.');
+            }
+        });
+
+        // ============================================
+        // LOAD DASHBOARD DATA
+        // ============================================
+
+        // Load progress and weekly summary when page loads
+        window.addEventListener('load', async () => {
+            await loadProgress();
+            await loadWeeklySummary();
+            await loadEntries();
+        });
+
+        /**
+         * Load and display user progress
+         */
+        async function loadProgress() {
+            try {
+                const progress = await getProgress();
+
+                if (progress) {
+                    // Update progress values
+                    document.getElementById('currentStreak').textContent = progress.currentStreak || 0;
+                    document.getElementById('longestStreak').textContent = progress.longestStreak || 0;
+                    document.getElementById('weeklyCount').textContent = progress.weeklyEntryCount || 0;
+                    document.getElementById('totalEntries').textContent = progress.totalEntries || 0;
+
+                    // Format and display last entry date
+                    if (progress.lastEntryDate) {
+                        const date = new Date(progress.lastEntryDate);
+                        document.getElementById('lastEntryDate').textContent = date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                    }
+
+                    // Show progress widget
+                    progressWidget.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading progress:', error);
+                // Don't show error to user, just hide widget
+            }
+        }
+
+        /**
+         * Load and display weekly summary
+         */
+        async function loadWeeklySummary() {
+            try {
+                const summary = await getWeeklySummary();
+
+                if (summary) {
+                    // Display summary content
+                    let summaryHTML = '<div class="summary-card">';
+
+                    if (summary.summaryText) {
+                        summaryHTML += `<p class="summary-text">${escapeHtml(summary.summaryText)}</p>`;
+                    }
+
+                    if (summary.generatedAt) {
+                        const date = new Date(summary.generatedAt);
+                        summaryHTML += `<p class="summary-date">Generated: ${date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</p>`;
+                    }
+
+                    summaryHTML += '</div>';
+                    weeklySummaryContent.innerHTML = summaryHTML;
+                    weeklySummarySection.style.display = 'block';
+                } else {
+                    // No summary available, show message
+                    weeklySummaryContent.innerHTML = '<p class="no-summary">No weekly summary available yet. Click "Generate Summary" to create one!</p>';
+                    weeklySummarySection.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading weekly summary:', error);
+                // Don't show error to user, just hide section
+            }
+        }
+
+        // ============================================
         // LOAD AND DISPLAY ENTRIES
         // ============================================
-        
-        // Load entries when page loads
-        window.addEventListener('load', loadEntries);
+
 
         /**
          * Fetch and display all journal entries
@@ -145,18 +316,18 @@
         async function loadEntries() {
             // Show loading spinner
             showLoading();
-            
+
             // Hide error and empty state
             hideError();
             emptyState.style.display = 'none';
-            
+
             // Clear existing entries
             entriesGrid.innerHTML = '';
 
             try {
                 // Fetch entries from backend using api.js function
                 const entries = await getAllEntries();
-                
+
                 // Hide loading spinner
                 hideLoading();
 
@@ -187,16 +358,16 @@
             // Create card container div
             const card = document.createElement('div');
             card.className = 'entry-card';
-            
+
             // Get mood emoji based on mood
             const moodEmoji = getMoodEmoji(entry.mood);
-            
+
             // Format date for display
             const date = formatDate(entry.date);
-            
+
             // Get sentiment bar color based on score
             const sentimentColor = getSentimentColor(entry.sentimentScore);
-            
+
             // Calculate sentiment percentage (convert -1 to 1 scale to 0 to 100)
             const sentimentPercent = ((entry.sentimentScore + 1) / 2) * 100;
 
@@ -254,7 +425,7 @@
         // ============================================
         // ENTRY ACTIONS
         // ============================================
-        
+
         /**
          * Navigate to entry details page
          * @param {string} entryId - Entry ID
@@ -277,13 +448,13 @@
             try {
                 // Show loading
                 showLoading();
-                
+
                 // Call delete API
                 await deleteEntry(entryId);
-                
+
                 // Reload entries to reflect deletion
                 await loadEntries();
-                
+
                 // Show success message
                 showSuccess('Entry deleted successfully!');
 
@@ -297,7 +468,7 @@
         // ============================================
         // HELPER FUNCTIONS
         // ============================================
-        
+
         /**
          * Get emoji for mood
          * @param {string} mood - Mood string
@@ -345,9 +516,9 @@
          */
         function formatDate(dateString) {
             const date = new Date(dateString);
-            const options = { 
-                year: 'numeric', 
-                month: 'short', 
+            const options = {
+                year: 'numeric',
+                month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit'
@@ -399,7 +570,7 @@
         function showError(message) {
             errorContainer.textContent = message;
             errorContainer.style.display = 'block';
-            
+
             // Auto-hide after 5 seconds
             setTimeout(() => {
                 errorContainer.style.display = 'none';
@@ -423,7 +594,7 @@
             successDiv.className = 'success-message';
             successDiv.textContent = message;
             document.body.appendChild(successDiv);
-            
+
             // Remove after 3 seconds
             setTimeout(() => {
                 successDiv.remove();
@@ -458,35 +629,36 @@
         }
     </script>
     <!-- Dark Mode Toggle Button -->
-<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-    <span id="themeIcon">🌙</span>
-</button>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <span id="themeIcon">🌙</span>
+    </button>
 
-<script>
-    // Dark mode toggle script
-    function toggleTheme() {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        // Update icon
-        document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-    }
+    <script>
+        // Dark mode toggle script
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-    // Load saved theme on page load
-    (function() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        // Set correct icon
-        const themeIcon = document.getElementById('themeIcon');
-        if (themeIcon) {
-            themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Update icon
+            document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
         }
-    })();
-</script>
+
+        // Load saved theme on page load
+        (function () {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // Set correct icon
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) {
+                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            }
+        })();
+    </script>
 </body>
+
 </html>

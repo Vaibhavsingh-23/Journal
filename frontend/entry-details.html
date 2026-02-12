@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entry Details - Journal App</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar">
@@ -33,7 +35,7 @@
 
         <!-- Entry content -->
         <div id="entryContainer" class="entry-details-container" style="display: none;">
-            
+
             <!-- Entry header -->
             <div class="entry-details-header">
                 <h1 id="entryTitle" class="entry-details-title"></h1>
@@ -98,6 +100,9 @@
                 <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
                     ← Back to Dashboard
                 </button>
+                <button class="btn btn-secondary" id="editBtn">
+                    ✏️ Edit Entry
+                </button>
                 <button class="btn btn-secondary" id="reanalyzeBtn">
                     🔄 Re-analyze
                 </button>
@@ -105,17 +110,41 @@
                     🗑️ Delete Entry
                 </button>
             </div>
+
+            <!-- Edit Form (hidden by default) -->
+            <div id="editForm" class="edit-form-container" style="display: none;">
+                <h3>✏️ Edit Entry</h3>
+                <form id="entryEditForm">
+                    <div class="form-group">
+                        <label for="editTitle">Title</label>
+                        <input type="text" id="editTitle" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editContent">Content</label>
+                        <textarea id="editContent" class="form-textarea" rows="10" required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            💾 Save Changes
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="cancelEditBtn">
+                            ❌ Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
         </div>
     </div>
 
     <!-- Include JavaScript -->
     <script src="js/api.js"></script>
-    
+
     <script>
         // ============================================
         // AUTHENTICATION CHECK
         // ============================================
-        
+
         if (!isLoggedIn()) {
             window.location.href = 'index.html';
         }
@@ -123,10 +152,10 @@
         // ============================================
         // GET ENTRY ID FROM URL
         // ============================================
-        
+
         // URL looks like: entry-details.html?id=123456
         // We need to extract the ID
-        
+
         // URLSearchParams is a built-in class for working with URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const entryId = urlParams.get('id'); // Get the 'id' parameter
@@ -140,17 +169,26 @@
         // ============================================
         // GET PAGE ELEMENTS
         // ============================================
-        
+
         const loadingSpinner = document.getElementById('loadingSpinner');
         const errorContainer = document.getElementById('errorContainer');
         const entryContainer = document.getElementById('entryContainer');
+        const editBtn = document.getElementById('editBtn');
         const reanalyzeBtn = document.getElementById('reanalyzeBtn');
         const deleteBtn = document.getElementById('deleteBtn');
+        const editForm = document.getElementById('editForm');
+        const entryEditForm = document.getElementById('entryEditForm');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const editTitle = document.getElementById('editTitle');
+        const editContent = document.getElementById('editContent');
+
+        // Store current entry data
+        let currentEntry = null;
 
         // ============================================
         // LOAD ENTRY ON PAGE LOAD
         // ============================================
-        
+
         window.addEventListener('load', loadEntry);
 
         /**
@@ -159,21 +197,23 @@
         async function loadEntry() {
             showLoading();
             hideError();
-            
+
             try {
                 // Fetch entry from API
                 const entry = await getEntryById(entryId);
-                
+
                 hideLoading();
-                
+
                 if (!entry) {
                     showError('Entry not found');
                     return;
                 }
-                
-                // Display entry
+
                 displayEntry(entry);
-                
+
+                // Store entry for editing
+                currentEntry = entry;
+
             } catch (error) {
                 console.error('Error loading entry:', error);
                 hideLoading();
@@ -188,10 +228,10 @@
         function displayEntry(entry) {
             // Show container
             entryContainer.style.display = 'block';
-            
+
             // Title
             document.getElementById('entryTitle').textContent = entry.title;
-            
+
             // Date
             const date = new Date(entry.date);
             const formattedDate = date.toLocaleDateString('en-US', {
@@ -202,21 +242,21 @@
                 minute: '2-digit'
             });
             document.getElementById('entryDate').textContent = formattedDate;
-            
+
             // Mood badge
             const moodEmoji = getMoodEmoji(entry.mood);
             const moodHtml = `<span class="mood-badge ${getMoodClass(entry.mood)}">${moodEmoji} ${entry.mood || 'Unknown'}</span>`;
             document.getElementById('entryMood').innerHTML = moodHtml;
-            
+
             // Content (preserve line breaks)
             const content = entry.content || 'No content';
             document.getElementById('entryContent').textContent = content;
-            
+
             // AI Analysis
             if (entry.analysisCompleted) {
                 displayAnalysis(entry);
             } else {
-                document.getElementById('analysisSection').innerHTML = 
+                document.getElementById('analysisSection').innerHTML =
                     '<p class="no-analysis">AI analysis not available for this entry.</p>';
             }
         }
@@ -228,38 +268,107 @@
         function displayAnalysis(entry) {
             // Mood
             const moodEmoji = getMoodEmoji(entry.mood);
-            document.getElementById('analysisMood').innerHTML = 
+            document.getElementById('analysisMood').innerHTML =
                 `${moodEmoji} ${entry.mood || 'Unknown'}`;
-            
+
             // Emotions
-            document.getElementById('analysisEmotions').textContent = 
+            document.getElementById('analysisEmotions').textContent =
                 entry.emotions || 'Not analyzed';
-            
+
             // Sentiment Score
             const sentimentScore = entry.sentimentScore || 0;
-            document.getElementById('analysisSentiment').textContent = 
+            document.getElementById('analysisSentiment').textContent =
                 sentimentScore.toFixed(2);
-            
+
             // Sentiment Bar
             const sentimentPercent = ((sentimentScore + 1) / 2) * 100;
             const sentimentColor = getSentimentColor(sentimentScore);
             const sentimentBar = document.getElementById('sentimentBar');
             sentimentBar.className = `sentiment-fill ${sentimentColor}`;
             sentimentBar.style.width = `${sentimentPercent}%`;
-            
+
             // Summary
-            document.getElementById('analysisSummary').textContent = 
+            document.getElementById('analysisSummary').textContent =
                 entry.aiSummary || 'No summary available';
-            
+
             // Motivational Thought
-            document.getElementById('analysisMotivation').textContent = 
+            document.getElementById('analysisMotivation').textContent =
                 entry.motivationalThought || 'Keep journaling!';
         }
 
         // ============================================
         // BUTTON ACTIONS
         // ============================================
-        
+
+        /**
+         * Edit button click
+         */
+        editBtn.addEventListener('click', () => {
+            if (!currentEntry) return;
+
+            // Populate edit form
+            editTitle.value = currentEntry.title;
+            editContent.value = currentEntry.content;
+
+            // Show edit form, hide display
+            editForm.style.display = 'block';
+            document.getElementById('entryContent').parentElement.style.display = 'none';
+            document.getElementById('analysisSection').style.display = 'none';
+        });
+
+        /**
+         * Cancel edit button
+         */
+        cancelEditBtn.addEventListener('click', () => {
+            // Hide edit form, show display
+            editForm.style.display = 'none';
+            document.getElementById('entryContent').parentElement.style.display = 'block';
+            document.getElementById('analysisSection').style.display = 'block';
+        });
+
+        /**
+         * Save edit form
+         */
+        entryEditForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const saveBtn = entryEditForm.querySelector('button[type="submit"]');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '💾 Saving...';
+
+            try {
+                // Update entry
+                const updatedEntry = await updateEntry(
+                    entryId,
+                    editTitle.value,
+                    editContent.value
+                );
+
+                // Update current entry
+                currentEntry = updatedEntry;
+
+                // Hide edit form
+                editForm.style.display = 'none';
+
+                // Reload entry display
+                displayEntry(updatedEntry);
+
+                // Show sections again
+                document.getElementById('entryContent').parentElement.style.display = 'block';
+                document.getElementById('analysisSection').style.display = 'block';
+
+                // Show success
+                showSuccess('Entry updated successfully!');
+
+            } catch (error) {
+                console.error('Error updating entry:', error);
+                showError('Failed to update entry. Please try again.');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Save Changes';
+            }
+        });
+
         /**
          * Re-analyze button click
          */
@@ -267,20 +376,20 @@
             if (!confirm('Re-analyze this entry? This will refresh the AI analysis.')) {
                 return;
             }
-            
+
             reanalyzeBtn.disabled = true;
             reanalyzeBtn.textContent = '🔄 Analyzing...';
-            
+
             try {
                 // Call reanalyze API
                 const updatedEntry = await reanalyzeEntry(entryId);
-                
+
                 // Reload entry display
                 displayEntry(updatedEntry);
-                
+
                 // Show success message
                 showSuccess('Entry re-analyzed successfully!');
-                
+
             } catch (error) {
                 console.error('Error re-analyzing:', error);
                 showError('Failed to re-analyze entry.');
@@ -297,18 +406,18 @@
             if (!confirm('Are you sure you want to delete this entry? This cannot be undone.')) {
                 return;
             }
-            
+
             deleteBtn.disabled = true;
             deleteBtn.textContent = '🗑️ Deleting...';
-            
+
             try {
                 // Delete entry
                 await deleteEntry(entryId);
-                
+
                 // Show success and redirect
                 alert('Entry deleted successfully!');
                 window.location.href = 'dashboard.html';
-                
+
             } catch (error) {
                 console.error('Error deleting:', error);
                 showError('Failed to delete entry.');
@@ -320,7 +429,7 @@
         // ============================================
         // HELPER FUNCTIONS
         // ============================================
-        
+
         function getMoodEmoji(mood) {
             const moodEmojis = {
                 'Happy': '😊',
@@ -369,42 +478,43 @@
             successDiv.className = 'success-message';
             successDiv.textContent = message;
             document.body.appendChild(successDiv);
-            
+
             setTimeout(() => {
                 successDiv.remove();
             }, 3000);
         }
     </script>
     <!-- Dark Mode Toggle Button -->
-<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-    <span id="themeIcon">🌙</span>
-</button>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <span id="themeIcon">🌙</span>
+    </button>
 
-<script>
-    // Dark mode toggle script
-    function toggleTheme() {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        // Update icon
-        document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-    }
+    <script>
+        // Dark mode toggle script
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-    // Load saved theme on page load
-    (function() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        // Set correct icon
-        const themeIcon = document.getElementById('themeIcon');
-        if (themeIcon) {
-            themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Update icon
+            document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
         }
-    })();
-</script>
+
+        // Load saved theme on page load
+        (function () {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // Set correct icon
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) {
+                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            }
+        })();
+    </script>
 </body>
+
 </html>
