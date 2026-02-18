@@ -26,8 +26,8 @@ public class WeeklySummaryCron {
      * Runs once daily at 9 AM
      */
 
-    //@Scheduled(cron = "0 0 9 * * *")
-    @Scheduled(cron = "*/30 * * * * *")
+    @Scheduled(cron = "0 0 9 * * *")
+   // @Scheduled(cron = "*/30 * * * * *")
     public void generateWeeklySummaries() {
 
         int today = DayOfWeek.from(LocalDate.now()).getValue(); // 1 = Monday
