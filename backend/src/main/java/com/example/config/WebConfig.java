@@ -11,11 +11,10 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
-                        "https://journal-frontend-v45t.onrender.com",
-                        "https://your-frontend-url.vercel.app",
                         "http://localhost:5500",
                         "http://localhost:3000",
-                        "http://127.0.0.1:5500")
+                        "http://127.0.0.1:5500",
+                        "https://journal-frontend-v45t.onrender.com")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
