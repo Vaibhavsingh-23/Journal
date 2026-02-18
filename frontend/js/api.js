@@ -8,7 +8,7 @@
 // const API_BASE_URL = 'https://journal-z8qo.onrender.com';
 
 // For local development, uncomment the line below:
-const API_BASE_URL = 'https://journal-backend.onrender.com';
+const API_BASE_URL = 'https://journal-backend-v14j.onrender.com';
 
 // ============================================
 // HELPER FUNCTIONS

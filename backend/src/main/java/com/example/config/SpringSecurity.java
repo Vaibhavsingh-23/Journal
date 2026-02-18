@@ -18,6 +18,12 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SpringSecurity {
+    /*
+     * NOTE: You may see a WARN in logs:
+     * "Global AuthenticationManager configured with an AuthenticationProvider bean."
+     * This is expected and intentional as we are using a custom
+     * DaoAuthenticationProvider.
+     */
 
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
@@ -26,19 +32,16 @@ public class SpringSecurity {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/public/**").permitAll() //  allow public access user 
+                        .requestMatchers("/public/**").permitAll() // allow public access user
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/journal/**", "/user/**").authenticated()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .cors(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .build();
     }
-
-
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
