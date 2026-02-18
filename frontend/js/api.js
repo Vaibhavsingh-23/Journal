@@ -8,7 +8,11 @@
 // const API_BASE_URL = 'https://journal-z8qo.onrender.com';
 
 // For local development, uncomment the line below:
-const API_BASE_URL = 'https://journal-backend-v14j.onrender.com/journal';
+// Dynamic API URL switching (detected based on where you open the app)
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = IS_LOCAL
+    ? 'http://localhost:8080/journal'
+    : 'https://journal-backend-v14j.onrender.com/journal';
 
 // ============================================
 // HELPER FUNCTIONS

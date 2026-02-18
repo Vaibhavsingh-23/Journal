@@ -26,6 +26,12 @@ public class CorsConfig {
         // Allow requests from these origins
         // VS Code Live Server typically uses ports 5500-5501
         config.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5500",
+                "http://127.0.0.1:5500",
+                "http://localhost:5501",
+                "http://127.0.0.1:5501",
+                "http://localhost:8000",
+                "http://127.0.0.1:8000",
                 "https://journal-frontend-v45t.onrender.com"));
 
         // Allow all headers

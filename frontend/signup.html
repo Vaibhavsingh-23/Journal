@@ -88,8 +88,12 @@
             loadingMessage.style.display = 'block';
 
             try {
+                // Dynamic backend selection
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const backendUrl = isLocal ? 'http://localhost:8080/journal' : 'https://journal-backend-v14j.onrender.com/journal';
+
                 // Call signup API
-                const response = await fetch('https://journal-backend-v14j.onrender.com/journal/public/create-user', {
+                const response = await fetch(`${backendUrl}/public/create-user`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
