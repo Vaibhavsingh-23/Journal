@@ -4,74 +4,72 @@ import com.example.dto.WeeklyAiReflection;
 import com.example.dto.WeeklySummaryBaseData;
 import com.example.entity.*;
 import com.example.repository.WeeklySummaryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+
 @Service
+@Slf4j
 public class WeeklySummaryCommandService {
 
-    @Autowired
-    private WeeklySummaryQueryService weeklySummaryQueryService;
+    private final WeeklySummaryQueryService weeklySummaryQueryService;
+    private final WeeklySummaryRepository weeklySummaryRepository;
+    private final GeminiService geminiService;
+    private final UserService userService;
+    private final EmailDeliveryService emailDeliveryService;
 
-    @Autowired
-    private WeeklySummaryRepository weeklySummaryRepository;
-
-    @Autowired
-    private GeminiService geminiService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private EmailDeliveryService emailDeliveryService;
+    public WeeklySummaryCommandService(WeeklySummaryQueryService weeklySummaryQueryService,
+                                        WeeklySummaryRepository weeklySummaryRepository,
+                                        GeminiService geminiService,
+                                        UserService userService,
+                                        EmailDeliveryService emailDeliveryService) {
+        this.weeklySummaryQueryService = weeklySummaryQueryService;
+        this.weeklySummaryRepository = weeklySummaryRepository;
+        this.geminiService = geminiService;
+        this.userService = userService;
+        this.emailDeliveryService = emailDeliveryService;
+    }
 
     public void generateWeeklySummary(User user) {
 
-        // 1️⃣ Idempotency check
+        // Step 1: Idempotency check — skip if already generated today
         if (user.getLastWeeklySummaryDate() != null &&
                 user.getLastWeeklySummaryDate().isEqual(LocalDate.now())) {
+            log.info("Weekly summary already generated today for user: {}", user.getUserName());
             return;
         }
 
-        // 2️⃣ Fetch read-side data
-        WeeklySummaryBaseData base =
-                weeklySummaryQueryService.fetchWeeklyBaseData(user.getObjectId());
+        // Step 2: Fetch data from read-side
+        WeeklySummaryBaseData base = weeklySummaryQueryService.fetchWeeklyBaseData(user.getId());
 
+        // Step 3: Build base summary object
         WeeklySummary summary = new WeeklySummary();
-        summary.setUserId(user.getObjectId());
+        summary.setUserId(user.getId());
         summary.setWeekStartDate(LocalDate.now().minusDays(7));
         summary.setWeekEndDate(LocalDate.now());
         summary.setGeneratedAt(LocalDateTime.now());
         summary.setDeliveryStatus(WeeklySummaryDeliveryStatus.DASHBOARD_ONLY);
 
-        // 3️⃣ Case A: No entries
+        // Case A: No entries this week → motivational message
         if (!base.isHasEntries()) {
-
             summary.setType(WeeklySummaryType.MOTIVATION);
             summary.setSummaryText(
-                    "You didn’t write anything last week. Even a few lines can help clear your mind. Want to start today?"
+                    "You didn't write anything last week. Even a few lines can help clear your mind. Want to start today?"
             );
             summary.setDaysWritten(0);
             summary.setMood("N/A");
 
-            weeklySummaryRepository.save(summary);
-
-            user.setLastWeeklySummaryDate(LocalDate.now());
-            userService.saveUser(user);
-
-            emailDeliveryService.deliverIfEligible(user, summary);
+            saveAndDeliver(summary, user);
             return;
         }
 
-        // 4️⃣ Case B: AI reflection
+        // Case B: AI reflection (happy path)
         try {
-            String weeklySignal = buildWeeklySignal(base.getJournalEntries());
-
+            // weeklySignal is now pre-built in query service (null-safe, no entity in DTO)
             WeeklyAiReflection aiReflection =
-                    geminiService.generateWeeklyReflection(weeklySignal);
+                    geminiService.generateWeeklyReflection(base.getWeeklySignal());
 
             summary.setType(WeeklySummaryType.AI_REFLECTION);
             summary.setSummaryText(aiReflection.getReflectionText());
@@ -80,55 +78,34 @@ public class WeeklySummaryCommandService {
             summary.setDaysWritten(base.getDaysWritten());
             summary.setMood(base.getDominantMood());
 
-            weeklySummaryRepository.save(summary);
-
-            user.setLastWeeklySummaryDate(LocalDate.now());
-            userService.saveUser(user);
-
-            emailDeliveryService.deliverIfEligible(user, summary);
+            saveAndDeliver(summary, user);
             return;
 
         } catch (Exception e) {
-            // fallback below
+            log.warn("AI weekly reflection failed for user {}, using deterministic fallback: {}",
+                    user.getUserName(), e.getMessage());
         }
 
-        // 5️⃣ Case C: Deterministic fallback
+        // Case C: Deterministic fallback
         summary.setType(WeeklySummaryType.SUMMARY);
         summary.setSummaryText(
-                String.format(
-                        "You wrote on %d days this week. Your overall mood was mostly %s.",
-                        base.getDaysWritten(),
-                        base.getDominantMood()
-                )
+                String.format("You wrote on %d day(s) this week. Your overall mood was mostly %s.",
+                        base.getDaysWritten(), base.getDominantMood())
         );
         summary.setDaysWritten(base.getDaysWritten());
         summary.setMood(base.getDominantMood());
 
-        weeklySummaryRepository.save(summary);
-
-        user.setLastWeeklySummaryDate(LocalDate.now());
-        userService.saveUser(user);
-
-        emailDeliveryService.deliverIfEligible(user, summary);
+        saveAndDeliver(summary, user);
     }
 
-    private String buildWeeklySignal(List<JournalEntry> entries) {
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("User wrote ").append(entries.size()).append(" entries last week.\n");
-
-        for (JournalEntry entry : entries) {
-            sb.append("- ")
-                    .append(entry.getDate().toLocalDate())
-                    .append(": Mood=")
-                    .append(entry.getMood())
-                    .append(", Sentiment=")
-                    .append(entry.getSentimentScore())
-                    .append(", Summary=\"")
-                    .append(entry.getAiSummary())
-                    .append("\"\n");
-        }
-
-        return sb.toString();
+    /**
+     * Save the summary, stamp the user's lastWeeklySummaryDate, and optionally email.
+     */
+    private void saveAndDeliver(WeeklySummary summary, User user) {
+        weeklySummaryRepository.save(summary);
+        user.setLastWeeklySummaryDate(LocalDate.now());
+        userService.saveUser(user);
+        emailDeliveryService.deliverIfEligible(user, summary);
+        log.info("Weekly summary saved for user: {}", user.getUserName());
     }
 }

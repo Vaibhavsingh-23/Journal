@@ -1,429 +1,259 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Journal App</title>
+    <title>Admin — Journal</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-    <!-- Navigation bar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-left">
-                <h1 class="nav-title">👑 Admin Dashboard</h1>
+    <div id="pageContent" style="display:none;">
+        <header class="page-header">
+            <h1>👑 Admin Console</h1>
+            <p>Manage users and monitor platform activity</p>
+        </header>
+
+        <div class="admin-kpi-grid" id="kpiGrid">
+            <div class="kpi-card glass-card">
+                <div class="kpi-icon users" aria-hidden="true">👥</div>
+                <div class="kpi-content">
+                    <h4>Total Users</h4>
+                    <div class="kpi-value" id="kpiTotalUsers">—</div>
+                </div>
             </div>
-            <div class="nav-right">
-                <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">
-                    📔 My Journal
-                </button>
-                <button class="btn btn-secondary" id="logoutBtn">
-                    🚪 Logout
-                </button>
+            <div class="kpi-card glass-card">
+                <div class="kpi-icon admins" aria-hidden="true">👑</div>
+                <div class="kpi-content">
+                    <h4>Admin Users</h4>
+                    <div class="kpi-value" id="kpiAdminUsers">—</div>
+                </div>
+            </div>
+            <div class="kpi-card glass-card">
+                <div class="kpi-icon entries" aria-hidden="true">📝</div>
+                <div class="kpi-content">
+                    <h4>Total Entries</h4>
+                    <div class="kpi-value" id="kpiTotalEntries">—</div>
+                </div>
+            </div>
+            <div class="kpi-card glass-card">
+                <div class="kpi-icon active" aria-hidden="true">📈</div>
+                <div class="kpi-content">
+                    <h4>Active Users</h4>
+                    <div class="kpi-value" id="kpiActiveUsers">—</div>
+                </div>
             </div>
         </div>
-    </nav>
 
-    <div class="container">
-        <!-- Page header -->
-        <div class="dashboard-header">
-            <h2>User Management</h2>
-            <p class="subtitle">View and manage all users in the system</p>
-        </div>
-
-        <!-- Create Admin User Section -->
-        <div class="admin-create-section">
+        <div class="admin-create-section glass-card">
             <h3>➕ Create New Admin User</h3>
-            <form id="createAdminForm" onsubmit="return false;">
+            <form id="createAdminForm" novalidate>
                 <div class="admin-form-row">
                     <div class="form-group">
                         <label for="adminUsername">Username</label>
-                        <input 
-                            type="text" 
-                            id="adminUsername" 
-                            placeholder="Enter username" 
-                            required
-                        >
+                        <input type="text" id="adminUsername" class="form-input" placeholder="Enter username" required>
                     </div>
                     <div class="form-group">
                         <label for="adminPassword">Password</label>
-                        <input 
-                            type="password" 
-                            id="adminPassword" 
-                            placeholder="Enter password" 
-                            required
-                        >
+                        <input type="password" id="adminPassword" class="form-input" placeholder="Enter password" required>
                     </div>
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary">
-                            Create Admin
-                        </button>
-                    </div>
+                    <button type="submit" class="btn btn-primary">Create Admin</button>
                 </div>
             </form>
         </div>
 
-        <!-- Loading indicator -->
-        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+        <div id="loadingSpinner" class="loading-spinner" style="display:none;">
             <div class="spinner"></div>
-            <p>Loading users...</p>
+            <p>Loading users…</p>
         </div>
+        <div id="errorContainer" class="alert alert-error" style="display:none;" role="alert"></div>
+        <div id="successContainer" class="success-container" style="display:none;"></div>
 
-        <!-- Error message -->
-        <div id="errorContainer" class="error-container" style="display: none;"></div>
+        <div class="users-table-section glass-card">
+            <div class="section-header" style="margin-bottom:1rem;">
+                <h2>User Management</h2>
+            </div>
 
-        <!-- Success message -->
-        <div id="successContainer" class="success-container" style="display: none;"></div>
+            <div class="table-toolbar">
+                <div class="toolbar-search" style="flex:1;">
+                    <span class="toolbar-search-icon" aria-hidden="true">🔍</span>
+                    <input type="search" id="userSearch" class="form-input" placeholder="Search users…" aria-label="Search users">
+                </div>
+                <select id="roleFilter" class="form-select" style="width:auto;min-width:140px;" aria-label="Filter by role">
+                    <option value="">All Roles</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="USER">User</option>
+                </select>
+            </div>
 
-        <!-- Users Table -->
-        <div class="users-table-container">
-            <h3>👥 All Users</h3>
-            <table id="usersTable" class="users-table">
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Roles</th>
-                        <th>Journal Entries</th>
-                        <th>User ID</th>
-                    </tr>
-                </thead>
-                <tbody id="usersTableBody">
-                    <!-- Users will be inserted here -->
-                </tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="users-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Roles</th>
+                            <th>Entries</th>
+                            <th>User ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="table-pagination">
+                <span class="pagination-info" id="paginationInfo">Showing 0 users</span>
+                <div class="pagination-controls">
+                    <button class="btn btn-secondary btn-sm" id="prevPage" type="button" disabled>← Prev</button>
+                    <button class="btn btn-secondary btn-sm" id="nextPage" type="button" disabled>Next →</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Include JavaScript -->
+    <script src="js/theme.js"></script>
     <script src="js/api.js"></script>
-    
+    <script src="js/utils.js"></script>
+    <script src="js/layout.js"></script>
     <script>
-        // ============================================
-        // AUTHENTICATION CHECK
-        // ============================================
-        
-        if (!isLoggedIn()) {
-            window.location.href = 'index.html';
+        initAppLayout('admin');
+
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentPage = 0;
+        const PAGE_SIZE = 10;
+
+        async function getAllUsers() {
+            return await apiFetch('/admin/all-user');
         }
 
-        // ============================================
-        // GET PAGE ELEMENTS
-        // ============================================
-        
-        const logoutBtn = document.getElementById('logoutBtn');
-        const createAdminForm = document.getElementById('createAdminForm');
-        const adminUsername = document.getElementById('adminUsername');
-        const adminPassword = document.getElementById('adminPassword');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const errorContainer = document.getElementById('errorContainer');
-        const successContainer = document.getElementById('successContainer');
-        const usersTableBody = document.getElementById('usersTableBody');
+        async function createAdminUser(username, password) {
+            return await apiFetch('/admin/create-admin-user', {
+                method: 'POST',
+                body: JSON.stringify({ userName: username, password })
+            });
+        }
 
-        // ============================================
-        // BUTTON EVENT LISTENERS
-        // ============================================
-        
-        logoutBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to logout?')) {
-                logout();
-            }
-        });
+        document.getElementById('userSearch').addEventListener('input', () => { currentPage = 0; filterAndRender(); });
+        document.getElementById('roleFilter').addEventListener('change', () => { currentPage = 0; filterAndRender(); });
+        document.getElementById('prevPage').addEventListener('click', () => { currentPage--; renderTable(); });
+        document.getElementById('nextPage').addEventListener('click', () => { currentPage++; renderTable(); });
 
-        // ============================================
-        // LOAD USERS ON PAGE LOAD
-        // ============================================
-        
         window.addEventListener('load', loadAllUsers);
 
-        /**
-         * Fetch and display all users
-         */
         async function loadAllUsers() {
-            showLoading();
-            hideError();
-            hideSuccess();
-            
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const errorContainer = document.getElementById('errorContainer');
+
+            loadingSpinner.style.display = 'block';
+            errorContainer.style.display = 'none';
+
             try {
-                // Call admin API to get all users
-                const users = await getAllUsers();
-                
-                hideLoading();
-
-                if (!users || users.length === 0) {
-                    usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No users found</td></tr>';
-                    return;
-                }
-
-                // Clear table
-                usersTableBody.innerHTML = '';
-
-                // Display each user
-                users.forEach(user => {
-                    createUserRow(user);
-                });
-
+                allUsers = await getAllUsers() || [];
+                loadingSpinner.style.display = 'none';
+                updateKpis(allUsers);
+                filterAndRender();
             } catch (error) {
-                console.error('Error loading users:', error);
-                hideLoading();
-                
-                // Check if it's a 403 Forbidden (not admin)
+                loadingSpinner.style.display = 'none';
                 if (error.message && error.message.includes('403')) {
-                    showError('Access denied. You need ADMIN role to view this page.');
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 2000);
+                    errorContainer.textContent = 'Access denied. Admin role required.';
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
                 } else {
-                    showError('Failed to load users. Please try again.');
+                    errorContainer.textContent = 'Failed to load users.';
                 }
+                errorContainer.style.display = 'block';
             }
         }
 
-        /**
-         * Create a table row for a user
-         * @param {Object} user - User object
-         */
+        function updateKpis(users) {
+            const admins = users.filter(u => u.roles && u.roles.includes('ADMIN')).length;
+            const totalEntries = users.reduce((sum, u) => sum + (u.journalEntries ? u.journalEntries.length : 0), 0);
+            const active = users.filter(u => u.journalEntries && u.journalEntries.length > 0).length;
+
+            document.getElementById('kpiTotalUsers').textContent = users.length;
+            document.getElementById('kpiAdminUsers').textContent = admins;
+            document.getElementById('kpiTotalEntries').textContent = totalEntries;
+            document.getElementById('kpiActiveUsers').textContent = active;
+        }
+
+        function filterAndRender() {
+            const query = document.getElementById('userSearch').value.trim().toLowerCase();
+            const role = document.getElementById('roleFilter').value;
+
+            filteredUsers = allUsers.filter(u => {
+                const name = (u.userName || '').toLowerCase();
+                const matchQuery = !query || name.includes(query);
+                const matchRole = !role || (u.roles && u.roles.includes(role));
+                return matchQuery && matchRole;
+            });
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('usersTableBody');
+            const start = currentPage * PAGE_SIZE;
+            const pageUsers = filteredUsers.slice(start, start + PAGE_SIZE);
+
+            tbody.innerHTML = '';
+
+            if (!pageUsers.length) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">No users found</td></tr>';
+            } else {
+                pageUsers.forEach(user => tbody.appendChild(createUserRow(user)));
+            }
+
+            const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 1;
+            document.getElementById('paginationInfo').textContent =
+                `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, filteredUsers.length)} of ${filteredUsers.length} users`;
+            document.getElementById('prevPage').disabled = currentPage === 0;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages - 1;
+        }
+
         function createUserRow(user) {
             const row = document.createElement('tr');
-            
-            // Get user ID
+
             let userId = 'N/A';
-            if (user.id) {
-                if (typeof user.id === 'object') {
-                    userId = user.id.timestamp || JSON.stringify(user.id);
-                } else {
-                    userId = user.id;
-                }
+            if (user.stringId) userId = String(user.stringId);
+            else if (user.id) {
+                userId = typeof user.id === 'object' ? String(user.id.timestamp || JSON.stringify(user.id)) : String(user.id);
             }
 
-            // Get roles
-            const roles = user.roles ? user.roles.join(', ') : 'USER';
-            
-            // Get journal count
             const journalCount = user.journalEntries ? user.journalEntries.length : 0;
-
-            // Create role badges
             let roleBadges = '';
-            if (user.roles && user.roles.includes('ADMIN')) {
-                roleBadges += '<span class="role-badge admin-badge">ADMIN</span> ';
-            }
-            if (user.roles && user.roles.includes('USER')) {
-                roleBadges += '<span class="role-badge user-badge">USER</span>';
-            }
+            if (user.roles && user.roles.includes('ADMIN')) roleBadges += '<span class="role-badge admin-badge">ADMIN</span> ';
+            if (user.roles && user.roles.includes('USER')) roleBadges += '<span class="role-badge user-badge">USER</span>';
 
             row.innerHTML = `
-                <td><strong>${escapeHtml(user.userName || 'Unknown')}</strong></td>
-                <td>${roleBadges}</td>
-                <td>${journalCount} entries</td>
-                <td><code class="user-id">${userId.substring(0, 10)}...</code></td>
-            `;
-
-            usersTableBody.appendChild(row);
+                <td data-label="Username"><strong>${escapeHtml(user.userName || 'Unknown')}</strong></td>
+                <td data-label="Roles">${roleBadges || '<span class="role-badge user-badge">USER</span>'}</td>
+                <td data-label="Entries">${journalCount} entries</td>
+                <td data-label="User ID"><code class="user-id">${escapeHtml(userId.substring(0, 12))}…</code></td>`;
+            return row;
         }
 
-        // ============================================
-        // CREATE ADMIN USER
-        // ============================================
-        
-        createAdminForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            
-            const username = adminUsername.value.trim();
-            const password = adminPassword.value.trim();
+        document.getElementById('createAdminForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value.trim();
 
-            if (!username || !password) {
-                showError('Please enter both username and password');
-                return;
-            }
-
-            if (password.length < 6) {
-                showError('Password must be at least 6 characters');
-                return;
-            }
-
-            hideError();
-            hideSuccess();
+            if (!username || !password) { showToast('Enter username and password', 'error'); return; }
+            if (password.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
 
             try {
-                showLoading();
-                
-                // Call admin API to create admin user
+                document.getElementById('loadingSpinner').style.display = 'block';
                 await createAdminUser(username, password);
-                
-                hideLoading();
-                
-                // Show success message
-                showSuccess(`Admin user "${username}" created successfully!`);
-                
-                // Clear form
-                adminUsername.value = '';
-                adminPassword.value = '';
-                
-                // Reload users table
+                document.getElementById('loadingSpinner').style.display = 'none';
+                showToast(`Admin "${username}" created!`, 'success');
+                document.getElementById('adminUsername').value = '';
+                document.getElementById('adminPassword').value = '';
                 await loadAllUsers();
-
             } catch (error) {
-                console.error('Error creating admin:', error);
-                hideLoading();
-                showError(error.message || 'Failed to create admin user. Please try again.');
+                document.getElementById('loadingSpinner').style.display = 'none';
+                showToast(error.message || 'Failed to create admin', 'error');
             }
         });
-
-        // ============================================
-        // ADMIN API FUNCTIONS
-        // ============================================
-        
-        /**
-         * Get all users (admin only)
-         */
-        async function getAllUsers() {
-            const credentials = getAuthCredentials();
-            
-            if (!credentials) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            const response = await fetch(`${API_BASE_URL}/admin/all-user`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Basic ${credentials}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.status === 401) {
-                logout();
-                return;
-            }
-
-            if (response.status === 403) {
-                throw new Error('403: Access denied. Admin role required.');
-            }
-
-            if (!response.ok) {
-                throw new Error(`Failed to fetch users: ${response.status}`);
-            }
-
-            return await response.json();
-        }
-
-        /**
-         * Create admin user (admin only)
-         */
-        async function createAdminUser(username, password) {
-            const credentials = getAuthCredentials();
-            
-            if (!credentials) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            const userData = {
-                userName: username,
-                password: password
-            };
-
-            const response = await fetch(`${API_BASE_URL}/admin/create-admin-user`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Basic ${credentials}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(userData)
-            });
-
-            if (response.status === 401) {
-                logout();
-                return;
-            }
-
-            if (response.status === 403) {
-                throw new Error('Access denied. Admin role required.');
-            }
-
-            if (!response.ok) {
-                throw new Error(`Failed to create admin: ${response.status}`);
-            }
-
-            return await response.json();
-        }
-
-        // ============================================
-        // HELPER FUNCTIONS
-        // ============================================
-        
-        function showLoading() {
-            loadingSpinner.style.display = 'block';
-        }
-
-        function hideLoading() {
-            loadingSpinner.style.display = 'none';
-        }
-
-        function showError(message) {
-            errorContainer.textContent = message;
-            errorContainer.style.display = 'block';
-            
-            setTimeout(() => {
-                errorContainer.style.display = 'none';
-            }, 5000);
-        }
-
-        function hideError() {
-            errorContainer.style.display = 'none';
-        }
-
-        function showSuccess(message) {
-            successContainer.textContent = message;
-            successContainer.style.display = 'block';
-            
-            setTimeout(() => {
-                successContainer.style.display = 'none';
-            }, 5000);
-        }
-
-        function hideSuccess() {
-            successContainer.style.display = 'none';
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
     </script>
-
-<!-- Dark Mode Toggle Button -->
-<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-    <span id="themeIcon">🌙</span>
-</button>
-
-<script>
-    // Dark mode toggle script
-    function toggleTheme() {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        // Update icon
-        document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-    }
-
-    // Load saved theme on page load
-    (function() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        // Set correct icon
-        const themeIcon = document.getElementById('themeIcon');
-        if (themeIcon) {
-            themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-        }
-    })();
-</script>
-
 </body>
+
 </html>

@@ -16,17 +16,21 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Journal App API with AI Analysis")
-                        .version("1.0")
-                        .description("REST API for journaling application with Gemini AI sentiment analysis")
+                        .title("Journal App API")
+                        .version("2.0")
+                        .description("REST API for journaling with Gemini AI analysis. " +
+                                "Authenticate via POST /public/login to receive a JWT. " +
+                                "Click 'Authorize' and enter: Bearer <your_token>")
                         .contact(new Contact()
-                                .name("Your Name")
-                                .email("your.email@example.com")))
+                                .name("Vaibhav Singh")
+                                .email("vaibhav@example.com")))
                 .components(new Components()
-                        .addSecuritySchemes("basicAuth",
+                        .addSecuritySchemes("bearerAuth",
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.HTTP)
-                                        .scheme("basic")))
-                .addSecurityItem(new SecurityRequirement().addList("basicAuth"));
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")
+                                        .description("Enter your JWT token (without 'Bearer ' prefix)")))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
     }
 }

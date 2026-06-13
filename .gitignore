@@ -3,3 +3,4 @@ logs/
 target/
 *.log
 .env
+backend-docs/

@@ -1,172 +1,196 @@
-// api.js - Handles all communication with backend API
+// ============================================================
+// api.js — All backend communication for the Journal App
+// ============================================================
+// Auth model: JWT Bearer tokens
+// Tokens are stored in sessionStorage (cleared when tab closes)
+// NO passwords are ever stored. Only the JWT token is kept.
+// ============================================================
 
-// ============================================
+// ============================================================
 // CONFIGURATION
-// ============================================
+// ============================================================
 
-// Production API URL (Render deployment)
-// const API_BASE_URL = 'https://journal-z8qo.onrender.com';
+const IS_LOCAL =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
 
-// For local development, uncomment the line below:
-// Dynamic API URL switching (detected based on where you open the app)
-const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+/**
+ * Base URL for all API calls.
+ * NOTE: The server context-path is /journal, so the full base is:
+ *   - local:      http://localhost:8080/journal
+ *   - production: https://journal-backend-v14j.onrender.com/journal
+ */
 const API_BASE_URL = IS_LOCAL
     ? 'http://localhost:8080/journal'
     : 'https://journal-backend-v14j.onrender.com/journal';
 
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
+// ============================================================
+// TOKEN MANAGEMENT (sessionStorage — never localStorage)
+// ============================================================
 
 /**
- * Get authentication credentials from localStorage
- * Returns the Base64 encoded credentials or null if not logged in
+ * Get the stored JWT token.
+ * Returns null if not logged in.
  */
-function getAuthCredentials() {
-    // localStorage.getItem() retrieves saved data from browser storage
-    // We saved credentials when user logged in
-    return localStorage.getItem('authCredentials');
+function getToken() {
+    return sessionStorage.getItem('jwtToken');
 }
 
 /**
- * Get username from localStorage
- * Returns the username or null if not logged in
+ * Get the stored username.
  */
 function getUsername() {
-    return localStorage.getItem('username');
+    return sessionStorage.getItem('username');
 }
 
 /**
- * Save authentication credentials to localStorage
- * @param {string} username - User's username
- * @param {string} password - User's password
+ * Save auth state after successful login.
+ * ONLY the token and username are stored — never the password.
+ * @param {string} token - JWT token from the server
+ * @param {string} username - Username of the logged-in user
  */
-function saveAuthCredentials(username, password) {
-    // btoa() converts "username:password" to Base64 format
-    // This is required for HTTP Basic Authentication
-    // Example: "john:pass123" becomes "am9objpwYXNzMTIz"
-    const credentials = btoa(`${username}:${password}`);
-
-    // Save to browser's localStorage so user stays logged in
-    localStorage.setItem('authCredentials', credentials);
-    localStorage.setItem('username', username);
+function saveAuthState(token, username) {
+    sessionStorage.setItem('jwtToken', token);
+    sessionStorage.setItem('username', username);
 }
 
 /**
- * Clear authentication credentials (logout)
+ * Clear auth state (logout).
  */
-function clearAuthCredentials() {
-    // Remove saved credentials from browser
-    localStorage.removeItem('authCredentials');
-    localStorage.removeItem('username');
+function clearAuthState() {
+    sessionStorage.removeItem('jwtToken');
+    sessionStorage.removeItem('username');
 }
 
 /**
- * Check if user is logged in
- * @returns {boolean} true if logged in, false otherwise
+ * Check if user is logged in (has a token).
+ * @returns {boolean}
  */
 function isLoggedIn() {
-    // If credentials exist in localStorage, user is logged in
-    return getAuthCredentials() !== null;
-}
-
-// ============================================
-// API CALL FUNCTIONS
-// ============================================
-
-/**
- * Login user - validates credentials with backend
- * @param {string} username 
- * @param {string} password 
- * @returns {Promise<Object>} Promise that resolves with user data or rejects with error
- */
-async function login(username, password) {
-    // Create Base64 credentials for this login attempt
-    const credentials = btoa(`${username}:${password}`);
-
-    try {
-        // fetch() makes HTTP request to backend
-        // We call GET /journal to verify credentials work
-        const response = await fetch(`${API_BASE_URL}/journal`, {
-            method: 'GET', // HTTP GET method
-            headers: {
-                // Authorization header in format: "Basic base64credentials"
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        // Check if request was successful (status 200-299)
-        if (!response.ok) {
-            // If 401, credentials are wrong
-            if (response.status === 401) {
-                throw new Error('Invalid username or password');
-            }
-            // Other errors
-            throw new Error(`Login failed: ${response.status}`);
-        }
-
-        // If successful, save credentials for future requests
-        saveAuthCredentials(username, password);
-
-        // Return success with username
-        return { success: true, username };
-
-    } catch (error) {
-        // If error occurs (network error, wrong credentials, etc.)
-        console.error('Login error:', error);
-        throw error; // Re-throw so calling code can handle it
-    }
+    return getToken() !== null;
 }
 
 /**
- * Logout user - clears credentials
+ * Logout and redirect to login page.
  */
 function logout() {
-    clearAuthCredentials();
-    // Redirect to login page
+    clearAuthState();
     window.location.href = 'index.html';
 }
 
-/**
- * Get all journal entries for logged-in user
- * @returns {Promise<Array>} Promise that resolves with array of journal entries
- */
-async function getAllEntries() {
-    // Get saved credentials
-    const credentials = getAuthCredentials();
+// ============================================================
+// CENTRALIZED FETCH WRAPPER
+// ============================================================
 
-    // If not logged in, redirect to login
-    if (!credentials) {
+/**
+ * Central API call wrapper. All requests go through here.
+ *
+ * - Automatically attaches Authorization: Bearer <token> header
+ * - Redirects to login on 401
+ * - Returns parsed JSON for 2xx responses
+ * - Returns null for 204 No Content
+ * - Throws an Error with a message for non-2xx responses
+ *
+ * @param {string} path - API path (e.g. '/journal', '/public/login')
+ * @param {object} options - fetch options (method, body, etc.)
+ * @param {boolean} requiresAuth - if true, attaches Bearer token (default: true)
+ * @returns {Promise<any>} parsed JSON response or null
+ */
+async function apiFetch(path, options = {}, requiresAuth = true) {
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    if (requiresAuth) {
+        const token = getToken();
+        if (!token) {
+            window.location.href = 'index.html';
+            return;
+        }
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers
+    });
+
+    // Handle 401/403 — token expired or invalid (Spring Security returns 403 by default)
+    if (response.status === 401 || (response.status === 403 && !path.startsWith('/admin'))) {
+        clearAuthState();
         window.location.href = 'index.html';
         return;
     }
 
+    // 204 No Content — successful but no body
+    if (response.status === 204) {
+        return null;
+    }
+
+    // Parse JSON response
+    const contentType = response.headers.get('content-type');
+    const data = contentType && contentType.includes('application/json')
+        ? await response.json()
+        : await response.text();
+
+    if (!response.ok) {
+        const message = (data && data.message) || (data && data.error) || `HTTP ${response.status}`;
+        throw new Error(message);
+    }
+
+    return data;
+}
+
+// ============================================================
+// AUTH FUNCTIONS
+// ============================================================
+
+/**
+ * Login with username and password.
+ * Sends credentials to backend, gets back a JWT.
+ * Stores the JWT in sessionStorage.
+ *
+ * @param {string} username
+ * @param {string} password
+ * @returns {Promise<{success: boolean, username: string}>}
+ */
+async function login(username, password) {
     try {
-        // Make GET request to fetch all entries
-        const response = await fetch(`${API_BASE_URL}/journal`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        // POST to /public/login — no auth token needed
+        const data = await apiFetch('/public/login', {
+            method: 'POST',
+            body: JSON.stringify({ username, password })
+        }, false); // requiresAuth = false
 
-        // If unauthorized (token expired), logout
-        if (response.status === 401) {
-            logout();
-            return;
+        if (data && data.token) {
+            saveAuthState(data.token, data.username);
+            return { success: true, username: data.username };
         }
 
-        // If request failed
-        if (!response.ok) {
-            throw new Error(`Failed to fetch entries: ${response.status}`);
-        }
+        throw new Error('Login failed: no token received');
 
-        // response.json() converts JSON string to JavaScript object/array
-        const entries = await response.json();
-        return entries;
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
+}
 
+// ============================================================
+// JOURNAL ENTRY FUNCTIONS
+// ============================================================
+
+/**
+ * Get all journal entries for the logged-in user (paginated).
+ * @param {number} page - page number (0-indexed, default 0)
+ * @param {number} size - entries per page (default 20)
+ * @returns {Promise<Object>} Page object with content, totalElements, etc.
+ */
+async function getAllEntries(page = 0, size = 20) {
+    try {
+        const response = await apiFetch(`/journal?page=${page}&size=${size}`);
+        // Handle Spring Data Page object or array
+        return response.content !== undefined ? response.content : response;
     } catch (error) {
         console.error('Error fetching entries:', error);
         throw error;
@@ -174,39 +198,13 @@ async function getAllEntries() {
 }
 
 /**
- * Get single journal entry by ID
- * @param {string} entryId - MongoDB ObjectId of the entry
- * @returns {Promise<Object>} Promise that resolves with journal entry
+ * Get a single journal entry by ID.
+ * @param {string} entryId - MongoDB ObjectId string
+ * @returns {Promise<Object>} Journal entry DTO
  */
 async function getEntryById(entryId) {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
     try {
-        const response = await fetch(`${API_BASE_URL}/journal/id/${entryId}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch entry: ${response.status}`);
-        }
-
-        const entry = await response.json();
-        return entry;
-
+        return await apiFetch(`/journal/id/${entryId}`);
     } catch (error) {
         console.error('Error fetching entry:', error);
         throw error;
@@ -214,50 +212,18 @@ async function getEntryById(entryId) {
 }
 
 /**
- * Create new journal entry
- * @param {string} title - Entry title
- * @param {string} content - Entry content
- * @returns {Promise<Object>} Promise that resolves with created entry (including AI analysis)
+ * Create a new journal entry.
+ * AI analysis runs automatically on the backend.
+ * @param {string} title
+ * @param {string} content
+ * @returns {Promise<Object>} Created entry DTO with AI analysis
  */
 async function createEntry(title, content) {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
     try {
-        // Create entry object to send
-        const entryData = {
-            title: title,
-            content: content
-        };
-
-        // Make POST request to create entry
-        const response = await fetch(`${API_BASE_URL}/journal`, {
+        return await apiFetch('/journal', {
             method: 'POST',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            },
-            // JSON.stringify() converts JavaScript object to JSON string
-            body: JSON.stringify(entryData)
+            body: JSON.stringify({ title, content })
         });
-
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to create entry: ${response.status}`);
-        }
-
-        // Backend returns created entry with AI analysis
-        const createdEntry = await response.json();
-        return createdEntry;
-
     } catch (error) {
         console.error('Error creating entry:', error);
         throw error;
@@ -265,304 +231,19 @@ async function createEntry(title, content) {
 }
 
 /**
- * Delete journal entry by ID
- * @param {string} entryId - MongoDB ObjectId of the entry
- * @returns {Promise<void>}
- */
-async function deleteEntry(entryId) {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
-    try {
-        // Note: Your backend endpoint is /journal/id/{id} with DELETE method
-        const response = await fetch(`${API_BASE_URL}/journal/id/${entryId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        // Check for 204 No Content (success) or 200 OK
-        if (response.status === 204 || response.status === 200) {
-            return { success: true };
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to delete entry: ${response.status}`);
-        }
-
-        return { success: true };
-
-    } catch (error) {
-        console.error('Error deleting entry:', error);
-        throw error;
-    }
-}
-
-/**
- * Re-analyze journal entry (refresh AI analysis)
- * @param {string} entryId - MongoDB ObjectId of the entry
- * @returns {Promise<Object>} Promise that resolves with updated entry
- */
-async function reanalyzeEntry(entryId) {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/journal/reanalyze/${entryId}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to reanalyze entry: ${response.status}`);
-        }
-
-        const updatedEntry = await response.json();
-        return updatedEntry;
-
-    } catch (error) {
-        console.error('Error reanalyzing entry:', error);
-        throw error;
-    }
-}
-
-/**
- * Get user progress statistics
- * @returns {Promise<Object>} Promise that resolves with progress data
- */
-async function getProgress() {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/dashboard/progress`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch progress: ${response.status}`);
-        }
-
-        const progress = await response.json();
-        return progress;
-
-    } catch (error) {
-        console.error('Error fetching progress:', error);
-        throw error;
-    }
-}
-
-/**
- * Get weekly summary
- * @returns {Promise<Object>} Promise that resolves with weekly summary data
- */
-async function getWeeklySummary() {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/dashboard/weekly-summary`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        // 204 No Content means no summary available yet
-        if (response.status === 204) {
-            return null;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch weekly summary: ${response.status}`);
-        }
-
-        const summary = await response.json();
-        return summary;
-
-    } catch (error) {
-        console.error('Error fetching weekly summary:', error);
-        throw error;
-    }
-}
-
-/**
- * Generate/update weekly summary
- * @returns {Promise<Object>} Promise that resolves when summary is generated
- */
-async function generateWeeklySummary() {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/test/weekly-summary`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to generate weekly summary: ${response.status}`);
-        }
-
-        const result = await response.text();
-        return { success: true, message: result };
-
-    } catch (error) {
-        console.error('Error generating weekly summary:', error);
-        throw error;
-    }
-}
-
-/**
- * Update user preferences
- * @param {string} email - User email
- * @param {boolean} weeklySummaryEnabled - Enable weekly summary
- * @param {number} weeklySummaryDay - Day of week (0=Sunday, 1=Monday, etc.)
- * @param {boolean} emailNotificationsEnabled - Enable email notifications
- * @returns {Promise<void>}
- */
-async function updatePreferences(email, weeklySummaryEnabled, weeklySummaryDay, emailNotificationsEnabled) {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
-    try {
-        const preferencesData = {
-            email: email,
-            weeklySummaryEnabled: weeklySummaryEnabled,
-            weeklySummaryDay: weeklySummaryDay,
-            emailNotificationsEnabled: emailNotificationsEnabled
-        };
-
-        const response = await fetch(`${API_BASE_URL}/user/preferences`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(preferencesData)
-        });
-
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to update preferences: ${response.status}`);
-        }
-
-        return { success: true };
-
-    } catch (error) {
-        console.error('Error updating preferences:', error);
-        throw error;
-    }
-}
-
-/**
- * Update journal entry
- * @param {string} entryId - Entry ID
- * @param {string} title - Updated title
- * @param {string} content - Updated content
- * @returns {Promise<Object>} Promise that resolves with updated entry
+ * Update an existing journal entry.
+ * If content changes, the backend re-runs AI analysis automatically.
+ * @param {string} entryId
+ * @param {string} title
+ * @param {string} content
+ * @returns {Promise<Object>} Updated entry DTO
  */
 async function updateEntry(entryId, title, content) {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
     try {
-        const entryData = {
-            title: title,
-            content: content
-        };
-
-        const response = await fetch(`${API_BASE_URL}/journal/id/${entryId}`, {
+        return await apiFetch(`/journal/id/${entryId}`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(entryData)
+            body: JSON.stringify({ title, content })
         });
-
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to update entry: ${response.status}`);
-        }
-
-        const updatedEntry = await response.json();
-        return updatedEntry;
-
     } catch (error) {
         console.error('Error updating entry:', error);
         throw error;
@@ -570,48 +251,115 @@ async function updateEntry(entryId, title, content) {
 }
 
 /**
- * Update user profile (username/password)
- * @param {string} username - New username
- * @param {string} password - New password
- * @returns {Promise<void>}
+ * Delete a journal entry.
+ * @param {string} entryId
+ * @returns {Promise<null>}
  */
-async function updateUser(username, password) {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
+async function deleteEntry(entryId) {
     try {
-        const userData = {
-            userName: username,
-            password: password
-        };
+        return await apiFetch(`/journal/id/${entryId}`, { method: 'DELETE' });
+    } catch (error) {
+        console.error('Error deleting entry:', error);
+        throw error;
+    }
+}
 
-        const response = await fetch(`${API_BASE_URL}/user`, {
+/**
+ * Re-run AI analysis on an existing entry.
+ * @param {string} entryId
+ * @returns {Promise<Object>} Updated entry DTO
+ */
+async function reanalyzeEntry(entryId) {
+    try {
+        return await apiFetch(`/journal/reanalyze/${entryId}`, { method: 'POST' });
+    } catch (error) {
+        console.error('Error reanalyzing entry:', error);
+        throw error;
+    }
+}
+
+// ============================================================
+// DASHBOARD FUNCTIONS
+// ============================================================
+
+/**
+ * Get user progress statistics (streak, entry counts).
+ * @returns {Promise<Object>} UserProgressDTO
+ */
+async function getProgress() {
+    try {
+        return await apiFetch('/api/dashboard/progress');
+    } catch (error) {
+        console.error('Error fetching progress:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get the latest weekly summary for the dashboard.
+ * Returns null if no summary has been generated yet (204 No Content).
+ * @returns {Promise<Object|null>} WeeklySummaryDashboardDTO or null
+ */
+async function getWeeklySummary() {
+    try {
+        return await apiFetch('/api/dashboard/weekly-summary');
+    } catch (error) {
+        console.error('Error fetching weekly summary:', error);
+        throw error;
+    }
+}
+
+// ============================================================
+// USER FUNCTIONS
+// ============================================================
+
+/**
+ * Get the current user's profile info.
+ * @returns {Promise<Object>} {username, email, preferences}
+ */
+async function getCurrentUser() {
+    try {
+        return await apiFetch('/user/me');
+    } catch (error) {
+        console.error('Error fetching user info:', error);
+        throw error;
+    }
+}
+
+/**
+ * Update user preferences (weekly summary settings, email notifications).
+ * @param {string|null} email
+ * @param {boolean|null} weeklySummaryEnabled
+ * @param {number|null} weeklySummaryDay  — ISO-8601: 1=Monday, 7=Sunday
+ * @param {boolean|null} emailNotificationsEnabled
+ * @returns {Promise<Object>}
+ */
+async function updatePreferences(email, weeklySummaryEnabled, weeklySummaryDay, emailNotificationsEnabled) {
+    try {
+        return await apiFetch('/user/preferences', {
             method: 'PUT',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData)
+            body: JSON.stringify({ email, weeklySummaryEnabled, weeklySummaryDay, emailNotificationsEnabled })
         });
+    } catch (error) {
+        console.error('Error updating preferences:', error);
+        throw error;
+    }
+}
 
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to update user: ${response.status}`);
-        }
-
-        // Update stored credentials with new username/password
-        saveAuthCredentials(username, password);
-
-        return { success: true };
-
+/**
+ * Update username and/or password.
+ * IMPORTANT: The user must log in again after this call — the old token
+ * stays valid until expiry but the username may have changed.
+ * @param {string} userName - new username
+ * @param {string} password - new password (required)
+ * @returns {Promise<Object>}
+ */
+async function updateUser(userName, password) {
+    try {
+        return await apiFetch('/user', {
+            method: 'PUT',
+            body: JSON.stringify({ userName, password })
+        });
     } catch (error) {
         console.error('Error updating user:', error);
         throw error;
@@ -619,74 +367,85 @@ async function updateUser(username, password) {
 }
 
 /**
- * Delete user account
- * @returns {Promise<void>}
+ * Delete the current user's account and ALL associated data.
+ * This action is irreversible.
+ * @returns {Promise<Object>}
  */
 async function deleteUser() {
-    const credentials = getAuthCredentials();
-
-    if (!credentials) {
-        window.location.href = 'index.html';
-        return;
-    }
-
     try {
-        const response = await fetch(`${API_BASE_URL}/user`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Failed to delete user: ${response.status}`);
-        }
-
-        // Clear credentials and redirect to signup
-        clearAuthCredentials();
-        return { success: true };
-
+        const result = await apiFetch('/user', { method: 'DELETE' });
+        clearAuthState();
+        return result;
     } catch (error) {
         console.error('Error deleting user:', error);
         throw error;
     }
 }
 
+// DASHBOARD FUNCTIONS
+// ============================================================
 
-// ============================================
-// EXPORT FUNCTIONS (Make them available to other files)
-// ============================================
+/**
+ * Get user progress (streaks, entry counts).
+ * @returns {Promise<Object>} Progress DTO
+ */
+async function getProgress() {
+    try {
+        return await apiFetch('/api/dashboard/progress');
+    } catch (error) {
+        console.error('Error fetching progress:', error);
+        throw error;
+    }
+}
 
-// These functions can now be used in other JavaScript files
-// Just include this file with <script src="js/api.js"></script>
+/**
+ * Get the latest weekly summary.
+ * @returns {Promise<Object>} Weekly Summary DTO
+ */
+async function getWeeklySummary() {
+    try {
+        return await apiFetch('/api/dashboard/weekly-summary');
+    } catch (error) {
+        // If 204 No Content is returned, it will be null or empty string, which is fine
+        console.error('Error fetching weekly summary:', error);
+        throw error;
+    }
+}
+
+/**
+ * Trigger the generation of a new weekly summary manually.
+ * @returns {Promise<Object>} Status message
+ */
+async function generateWeeklySummary() {
+    try {
+        return await apiFetch('/api/dashboard/weekly-summary', {
+            method: 'POST'
+        });
+    } catch (error) {
+        console.error('Error generating weekly summary:', error);
+        throw error;
+    }
+}
 
 /*
-Usage example in other files:
-
-// Login
-login('john', 'password123')
-    .then(data => {
-        console.log('Logged in!', data);
-    })
-    .catch(error => {
-        console.error('Login failed:', error);
-    });
-
-// Get all entries
-getAllEntries()
-    .then(entries => {
-        console.log('My entries:', entries);
-    });
-
-// Create entry
-createEntry('My Day', 'Today was great!')
-    .then(entry => {
-        console.log('Entry created:', entry);
-    });
-*/
+ * ============================================================
+ * Usage examples:
+ * ============================================================
+ *
+ * // Login (gets JWT, stores in sessionStorage)
+ * login('john', 'mypassword')
+ *   .then(data => console.log('Logged in:', data.username))
+ *   .catch(err => console.error('Login failed:', err.message));
+ *
+ * // Create an entry
+ * createEntry('My Day', 'Today was amazing!')
+ *   .then(entry => console.log('Created:', entry.id, 'Mood:', entry.mood));
+ *
+ * // Update an entry
+ * updateEntry('entryId123', 'Updated Title', 'New content here')
+ *   .then(entry => console.log('Updated:', entry));
+ *
+ * // Delete an entry
+ * deleteEntry('entryId123')
+ *   .then(() => console.log('Deleted successfully'));
+ */

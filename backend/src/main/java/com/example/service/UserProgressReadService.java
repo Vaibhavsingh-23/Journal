@@ -9,8 +9,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserProgressReadService {
 
-    @Autowired
-    private UserProgressRepository userProgressRepository;
+    private final UserProgressRepository userProgressRepository;
+
+    public UserProgressReadService(UserProgressRepository userProgressRepository) {
+        this.userProgressRepository = userProgressRepository;
+    }
 
     public UserProgress getProgressForUser(ObjectId userId) {
         return userProgressRepository

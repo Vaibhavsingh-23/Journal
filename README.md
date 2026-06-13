@@ -1,19 +1,19 @@
-# 📔 AI-Powered Journal Application
+#  AI-Powered Journal Application
 
 A full-stack journaling application with **Google Gemini AI** integration for intelligent mood detection, emotion analysis, and personalized insights.
 
 ---
 
-## ✨ Features
+## Features
 
-- 🔐 **Secure Authentication** - User registration and login with BCrypt encryption
-- 📝 **Journal Entries** - Create and view personal journal entries
-- 🤖 **AI Analysis** - Automatic mood detection, emotion extraction, and sentiment scoring
-- 📊 **Progress Tracking** - Writing streaks, weekly stats, and entry counts
-- 📧 **Weekly Summaries** - AI-generated weekly summaries with email delivery
-- ⚙️ **User Settings** - Email preferences for weekly summaries
-- 👑 **Admin Dashboard** - User management and system overview
-- 🌙 **Dark Mode** - Beautiful dark theme support
+-  **Secure Authentication** - User registration and login with BCrypt encryption
+-  **Journal Entries** - Create and view personal journal entries
+-  **AI Analysis** - Automatic mood detection, emotion extraction, and sentiment scoring
+-  **Progress Tracking** - Writing streaks, weekly stats, and entry counts
+-  **Weekly Summaries** - AI-generated weekly summaries with email delivery
+-  **User Settings** - Email preferences for weekly summaries
+-  **Admin Dashboard** - User management and system overview
+-  **Dark Mode** - Beautiful dark theme support
 
 ---
 
@@ -37,11 +37,11 @@ Main dashboard displaying journal entries with mood indicators, sentiment scores
 <img src="screenshots/save-entry.png" alt="AI Analysis" width="100%"/>
 
 Every entry is automatically analyzed by Google Gemini AI for:
-- 🎭 Mood Detection
-- 💭 Emotion Extraction
-- 📈 Sentiment Scoring
-- 📝 AI-Generated Summary
-- 💪 Motivational Insights
+-  Mood Detection
+-  Emotion Extraction
+-  Sentiment Scoring
+-  AI-Generated Summary
+-  Motivational Insights
 
 ---
 
@@ -73,7 +73,7 @@ Admin capabilities:
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 **Backend:** Java 17, Spring Boot 3.4.5, Spring Security, MongoDB Atlas  
 **AI:** Google Gemini API  
@@ -81,7 +81,7 @@ Admin capabilities:
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Java 17+
@@ -122,7 +122,7 @@ cd frontend
 
 ---
 
-## 📡 API Endpoints
+##  API Endpoints
 
 ### Public
 - `POST /public/create-user` - Register new user
@@ -147,7 +147,7 @@ cd frontend
 
 ---
 
-## 📁 Project Structure
+##  Project Structure 
 
 ```
 Journal/
@@ -170,7 +170,7 @@ Journal/
 
 ---
 
-## 🔒 Security
+##  Security
 
 - **BCrypt Password Encryption** - All passwords are securely hashed
 - **HTTP Basic Authentication** - Secure credential transmission
@@ -180,7 +180,7 @@ Journal/
 
 ---
 
-## 👨‍💻 Author
+##  Author
 
 **Vaibhav Singh**  
 GitHub: [@Vaibhavsingh-23](https://github.com/Vaibhavsingh-23)  
@@ -188,7 +188,7 @@ LinkedIn: [vaibhavsinghnmp](https://www.linkedin.com/in/vaibhavsinghnmp)
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 Built with Spring Boot, MongoDB, and Google Gemini AI
 

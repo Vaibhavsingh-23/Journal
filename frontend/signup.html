@@ -4,58 +4,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - Journal App</title>
+    <title>Create Account — Journal</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-    <div class="container">
-        <div class="login-card">
-            <h1 class="app-title">
-                <img src="icons/journal.png" alt="Journal" class="app-icon">
-                Journal App
-            </h1>
-            <h2 class="page-title">Create Account</h2>
-
-            <form id="signupForm" onsubmit="handleSignup(event)">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="Choose a username" required minlength="3">
-                    <small class="form-hint">At least 3 characters</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Choose a password" required minlength="6">
-                    <small class="form-hint">At least 6 characters</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" placeholder="Re-enter password" required>
-                </div>
-
-                <div id="errorMessage" class="error-message" style="display:none"></div>
-                <div id="loadingMessage" class="loading-message" style="display:none">Creating account...</div>
-
-                <button type="submit" id="signupBtn" class="btn btn-primary">Create Account</button>
-            </form>
-
-            <p class="signup-text">
-                Already have an account?
-                <a href="index.html">Login</a>
+    <div class="auth-layout">
+        <div class="auth-panel-left">
+            <h1 class="auth-hero-title">Start writing.<br>Start growing.</h1>
+            <p class="auth-hero-subtitle">
+                Join thousands who use Journal to capture thoughts, track emotions,
+                and discover patterns in their inner world.
             </p>
+            <div class="auth-illustration" aria-hidden="true">
+                <div class="auth-illustration-glow"></div>
+                <div class="auth-illustration-content">
+                    <div class="auth-illustration-emoji">🌱</div>
+                    <p style="color: var(--text-muted); font-size: var(--text-small);">Your journey begins with a single entry</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-panel-right">
+            <div class="auth-card glass-card">
+                <div class="auth-card-header">
+                    <div class="auth-logo">
+                        <span class="auth-logo-icon" aria-hidden="true">📖</span>
+                        <span class="auth-logo-text">Journal</span>
+                    </div>
+                    <h2>Create account</h2>
+                    <p class="auth-card-subtitle">Free to start. No credit card required.</p>
+                </div>
+
+                <form id="signupForm" novalidate>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" class="form-input" placeholder="Choose a username"
+                            required minlength="3" autocomplete="username">
+                        <small class="form-hint">At least 3 characters</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" class="form-input" placeholder="Choose a password"
+                            required minlength="6" autocomplete="new-password">
+                        <small class="form-hint">At least 6 characters</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="form-input" placeholder="Re-enter password"
+                            required autocomplete="new-password">
+                    </div>
+                    <div id="errorMessage" class="alert alert-error" style="display: none;" role="alert"></div>
+                    <div id="loadingMessage" class="alert alert-info" style="display: none;">Creating account…</div>
+                    <button type="submit" id="signupBtn" class="btn btn-primary btn-lg" style="width: 100%;">
+                        Create Account
+                    </button>
+                </form>
+
+                <p class="auth-footer">
+                    Already have an account? <a href="index.html">Sign in</a>
+                </p>
+            </div>
         </div>
     </div>
 
+    <script src="js/theme.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
     <script>
-        // Redirect if already logged in
-        if (localStorage.getItem('journal_auth')) {
-            window.location.href = 'dashboard.html';
-        }
+        if (isLoggedIn()) window.location.href = 'dashboard.html';
 
-        async function handleSignup(event) {
-            event.preventDefault();
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
 
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
@@ -64,111 +84,56 @@
             const loadingMessage = document.getElementById('loadingMessage');
             const signupBtn = document.getElementById('signupBtn');
 
-            // Clear previous errors
             errorMessage.style.display = 'none';
 
-            // Validation
             if (username.length < 3) {
-                showError('Username must be at least 3 characters');
+                errorMessage.textContent = 'Username must be at least 3 characters';
+                errorMessage.style.display = 'block';
                 return;
             }
-
             if (password.length < 6) {
-                showError('Password must be at least 6 characters');
+                errorMessage.textContent = 'Password must be at least 6 characters';
+                errorMessage.style.display = 'block';
                 return;
             }
-
             if (password !== confirmPassword) {
-                showError('Passwords do not match');
+                errorMessage.textContent = 'Passwords do not match';
+                errorMessage.style.display = 'block';
                 return;
             }
 
-            // Disable button and show loading
             signupBtn.disabled = true;
             loadingMessage.style.display = 'block';
 
             try {
-                // Dynamic backend selection
                 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 const backendUrl = isLocal ? 'http://localhost:8080/journal' : 'https://journal-backend-v14j.onrender.com/journal';
 
-                // Call signup API
                 const response = await fetch(`${backendUrl}/public/create-user`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        userName: username,
-                        password: password
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userName: username, password })
                 });
-
-                loadingMessage.style.display = 'none';
 
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(errorText || 'Failed to create account');
                 }
 
-                // Success! Show message and redirect to login
-                alert('Account created successfully! Please login.');
-                window.location.href = 'index.html';
-
+                showToast('Account created! Redirecting to sign in…', 'success');
+                setTimeout(() => { window.location.href = 'index.html'; }, 1200);
             } catch (error) {
-                loadingMessage.style.display = 'none';
-                signupBtn.disabled = false;
-
-                // Handle specific errors
-                let errorMsg = 'Failed to create account. Please try again.';
-
+                let msg = 'Failed to create account. Please try again.';
                 if (error.message.includes('duplicate') || error.message.includes('exists')) {
-                    errorMsg = 'Username already exists. Please choose a different username.';
-                } else if (error.message.includes('invalid')) {
-                    errorMsg = 'Invalid username or password format.';
+                    msg = 'Username already exists. Please choose a different username.';
                 }
-
-                showError(errorMsg);
+                errorMessage.textContent = msg;
+                errorMessage.style.display = 'block';
+                signupBtn.disabled = false;
+            } finally {
+                loadingMessage.style.display = 'none';
             }
-        }
-
-        function showError(message) {
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-        }
-    </script>
-
-    <!-- Dark Mode Toggle Button -->
-    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-        <span id="themeIcon">🌙</span>
-    </button>
-
-    <script>
-        // Dark mode toggle script
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-
-            // Update icon
-            document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-        }
-
-        // Load saved theme on page load
-        (function () {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-
-            // Set correct icon
-            const themeIcon = document.getElementById('themeIcon');
-            if (themeIcon) {
-                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-            }
-        })();
+        });
     </script>
 </body>
 

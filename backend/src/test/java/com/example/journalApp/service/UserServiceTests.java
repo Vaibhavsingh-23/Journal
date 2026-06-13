@@ -9,10 +9,13 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled("Legacy test class - superseded by com.example.service.UserServiceTest. All tests here require a real MongoDB connection.")
 @SpringBootTest
+@ActiveProfiles("test")
 public class UserServiceTests {
 
     @Autowired
@@ -28,7 +31,7 @@ public class UserServiceTests {
     @Test
     public void testFindByUserName(){
         User user = userRepository.findByUserName("Muttu");
-        assertTrue(!user.getJournalEntries().isEmpty());
+        assertTrue(!user.getJournalEntryIds().isEmpty());
     }
     @Disabled
     @ParameterizedTest

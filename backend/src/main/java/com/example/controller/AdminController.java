@@ -2,82 +2,87 @@ package com.example.controller;
 
 import com.example.entity.User;
 import com.example.service.UserService;
+import com.example.service.WeeklySummaryCommandService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
+/**
+ * Admin-only endpoints. Requires ADMIN role (enforced by SpringSecurity config).
+ *
+ * GET  /admin/all-user              — List all users
+ * POST /admin/create-admin-user     — Create an admin account
+ * POST /api/admin/weekly-summary    — Manually trigger weekly summary for current user (testing)
+ */
 @RestController
-@RequestMapping("/admin")
 @Slf4j
+@Tag(name = "Admin", description = "Admin-only management endpoints")
 public class AdminController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final WeeklySummaryCommandService weeklySummaryCommandService;
 
-    /**
-     * Get all users - Admin only
-     * Returns empty list instead of 404 if no users found
-     */
-    @GetMapping("/all-user")
-    public ResponseEntity<?> getAllUsers(){
-        try {
-            log.info("Admin requesting all users");
-            List<User> all = userService.getAll();
-
-            // Always return 200 OK with the list (even if empty)
-            // Empty list is valid response, not an error
-            return new ResponseEntity<>(all, HttpStatus.OK);
-
-        } catch (Exception e) {
-            log.error("Error fetching all users", e);
-            return new ResponseEntity<>("Failed to fetch users: " + e.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public AdminController(UserService userService,
+                            WeeklySummaryCommandService weeklySummaryCommandService) {
+        this.userService = userService;
+        this.weeklySummaryCommandService = weeklySummaryCommandService;
     }
 
-    /**
-     * Create admin user - Admin only
-     * Better error handling and validation
-     */
-    @PostMapping("/create-admin-user")
-    public ResponseEntity<?> createUser(@RequestBody User user){
-        try {
-            log.info("Creating admin user: {}", user.getUserName());
+    // ------------------------------------------------------------------
+    // /admin/** endpoints
+    // ------------------------------------------------------------------
 
-            // Validate input
-            if (user.getUserName() == null || user.getUserName().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Username is required");
-            }
+    @GetMapping("/admin/all-user")
+    @Operation(summary = "Get all users (admin only)")
+    public ResponseEntity<List<User>> getAllUsers() {
+        log.info("Admin requesting all users");
+        return ResponseEntity.ok(userService.getAll());
+    }
 
-            if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Password is required");
-            }
-
-            if (user.getPassword().length() < 6) {
-                return ResponseEntity.badRequest().body("Password must be at least 6 characters");
-            }
-
-            // Check if user already exists
-            User existingUser = userService.findByUserName(user.getUserName());
-            if (existingUser != null) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body("Username already exists");
-            }
-
-            // Save admin user
-            userService.saveAdmin(user);
-
-            log.info("Admin user created successfully: {}", user.getUserName());
-            return ResponseEntity.status(HttpStatus.CREATED).body(user);
-
-        } catch (Exception e) {
-            log.error("Error creating admin user", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to create admin: " + e.getMessage());
+    @PostMapping("/admin/create-admin-user")
+    @Operation(summary = "Create a new admin user")
+    public ResponseEntity<?> createAdminUser(@RequestBody User user) {
+        if (user.getUserName() == null || user.getUserName().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Username is required"));
         }
+        if (user.getPassword() == null || user.getPassword().length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Password must be at least 6 characters"));
+        }
+
+        User existing = userService.findByUserName(user.getUserName());
+        if (existing != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Username already exists"));
+        }
+
+        userService.saveAdmin(user);
+        log.info("Admin user created: {}", user.getUserName());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "Admin user created", "username", user.getUserName()));
+    }
+
+    // ------------------------------------------------------------------
+    // /api/admin/** — admin testing tools
+    // MOVED from WeeklySummaryTestController and gated behind ADMIN role
+    // ------------------------------------------------------------------
+
+    @PostMapping("/api/admin/weekly-summary")
+    @Operation(summary = "Manually trigger weekly summary generation (admin testing)")
+    public ResponseEntity<Map<String, String>> triggerWeeklySummary(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User user = userService.findByUserName(userDetails.getUsername());
+        weeklySummaryCommandService.generateWeeklySummary(user);
+
+        log.info("Admin manually triggered weekly summary for: {}", user.getUserName());
+        return ResponseEntity.ok(Map.of("message", "Weekly summary generation triggered"));
     }
 }

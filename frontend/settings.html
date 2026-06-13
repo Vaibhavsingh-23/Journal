@@ -4,236 +4,343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - My Journal</title>
+    <title>Settings — Journal</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-    <!-- Navigation bar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-left">
-                <h1 class="nav-title">
-                    <img src="../icons/journal.png" alt="Journal" class="nav-icon">
-                    My Journal
-                </h1>
-                <span class="nav-username" id="navUsername"></span>
-            </div>
-            <div class="nav-right">
-                <button class="btn btn-secondary" id="dashboardBtn">
-                    🏠 Dashboard
-                </button>
-                <button class="btn btn-secondary" id="logoutBtn">
-                    🚪 Logout
-                </button>
-            </div>
-        </div>
-    </nav>
+    <div id="pageContent" style="display:none;">
+        <header class="page-header">
+            <h1>⚙️ Settings</h1>
+            <p>Manage your profile, preferences, and account</p>
+        </header>
 
-    <!-- Main content -->
-    <div class="container">
-        <div class="dashboard-header">
-            <h2>⚙️ Settings</h2>
-            <p class="subtitle">Manage your preferences and account</p>
-        </div>
+        <div class="settings-layout">
+            <nav class="settings-nav" aria-label="Settings sections">
+                <a href="#profile" class="settings-nav-link active">Profile</a>
+                <a href="#notifications" class="settings-nav-link">Notifications</a>
+                <a href="#ai-features" class="settings-nav-link">AI Features</a>
+                <a href="#appearance" class="settings-nav-link">Appearance</a>
+                <a href="#danger" class="settings-nav-link">Danger Zone</a>
+            </nav>
 
-        <!-- Loading indicator -->
-        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
-            <div class="spinner"></div>
-            <p>Saving...</p>
-        </div>
-
-        <!-- Success/Error messages -->
-        <div id="messageContainer" class="message-container" style="display: none;"></div>
-
-        <!-- Settings Sections -->
-        <div class="settings-container">
-
-            <!-- User Preferences Section -->
-            <div class="settings-section">
-                <h3>📊 Weekly Summary Preferences</h3>
-                <form id="preferencesForm" class="settings-form">
-                    <div class="form-group">
-                        <label for="emailInput">Email Address</label>
-                        <input type="email" id="emailInput" class="form-input" placeholder="your.email@example.com"
-                            required>
-                        <small>Where weekly summaries will be sent</small>
+            <div class="settings-sections">
+                <!-- Profile -->
+                <section id="profile" class="settings-section glass-card">
+                    <div class="settings-section-header">
+                        <span class="settings-section-icon" aria-hidden="true">👤</span>
+                        <h3>Profile Information</h3>
                     </div>
+                    <div class="profile-row">
+                        <div class="avatar-placeholder" id="avatarInitials" aria-hidden="true">U</div>
+                        <div class="profile-info">
+                            <h4 id="profileUsername">—</h4>
+                            <p id="profileEmail">No email configured</p>
+                        </div>
+                    </div>
+                </section>
 
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="weeklySummaryEnabled">
-                            <span>Enable Weekly Summary Emails</span>
+                <!-- Notifications -->
+                <section id="notifications" class="settings-section glass-card">
+                    <div class="settings-section-header">
+                        <span class="settings-section-icon" aria-hidden="true">📧</span>
+                        <h3>Notifications</h3>
+                    </div>
+                    <form id="preferencesForm" class="settings-form" novalidate>
+                        <div class="form-group">
+                            <label for="emailInput">Email Address</label>
+                            <input type="email" id="emailInput" class="form-input" placeholder="your.email@example.com" autocomplete="email">
+                            <div class="email-status-badge" id="emailStatusBadge" role="status">
+                                <span aria-hidden="true">✅</span>
+                                <span id="emailStatusText"></span>
+                            </div>
+                            <small class="form-hint">Where weekly summaries will be sent</small>
+                        </div>
+
+                        <div class="settings-toggle-row">
+                            <div class="settings-toggle-info">
+                                <h4>Weekly Summary Emails</h4>
+                                <p>Receive AI-generated weekly summaries</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="weeklySummaryEnabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="weeklySummaryDay">Summary Day</label>
+                            <select id="weeklySummaryDay" class="form-input">
+                                <option value="7">Sunday</option>
+                                <option value="1">Monday</option>
+                                <option value="2">Tuesday</option>
+                                <option value="3">Wednesday</option>
+                                <option value="4">Thursday</option>
+                                <option value="5">Friday</option>
+                                <option value="6">Saturday</option>
+                            </select>
+                        </div>
+
+                        <div class="settings-toggle-row">
+                            <div class="settings-toggle-info">
+                                <h4>Email Notifications</h4>
+                                <p>General notifications about journal activity</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="emailNotificationsEnabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="settings-toggle-row">
+                            <div class="settings-toggle-info">
+                                <h4>Reminder Preferences</h4>
+                                <p>Daily journaling reminders (stored locally)</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="reminderEnabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="savePrefsBtn">💾 Save Preferences</button>
+                    </form>
+                </section>
+
+                <!-- AI Features -->
+                <section id="ai-features" class="settings-section glass-card">
+                    <div class="settings-section-header">
+                        <span class="settings-section-icon" aria-hidden="true">✨</span>
+                        <h3>AI Features</h3>
+                    </div>
+                    <p class="ai-feature-note">These preferences are stored locally and control UI display. AI analysis always runs on the backend when you save entries.</p>
+
+                    <div class="settings-toggle-row">
+                        <div class="settings-toggle-info">
+                            <h4>Emotion Analysis</h4>
+                            <p>Show detailed emotion breakdown on entries</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="aiEmotionAnalysis" checked>
+                            <span class="toggle-slider"></span>
                         </label>
-                        <small>Receive AI-generated weekly summaries via email</small>
                     </div>
-
-                    <div class="form-group">
-                        <label for="weeklySummaryDay">Summary Day</label>
-                        <select id="weeklySummaryDay" class="form-input">
-                            <option value="0">Sunday</option>
-                            <option value="1">Monday</option>
-                            <option value="2">Tuesday</option>
-                            <option value="3">Wednesday</option>
-                            <option value="4">Thursday</option>
-                            <option value="5">Friday</option>
-                            <option value="6">Saturday</option>
-                        </select>
-                        <small>Day of the week to receive summary</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="emailNotificationsEnabled">
-                            <span>Enable Email Notifications</span>
+                    <div class="settings-toggle-row">
+                        <div class="settings-toggle-info">
+                            <h4>Motivational Quotes</h4>
+                            <p>Display motivational insights after analysis</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="aiMotivationalQuotes" checked>
+                            <span class="toggle-slider"></span>
                         </label>
-                        <small>General email notifications</small>
+                    </div>
+                    <div class="settings-toggle-row">
+                        <div class="settings-toggle-info">
+                            <h4>Smart Insights</h4>
+                            <p>Enhanced analytics and theme detection</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="aiSmartInsights" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Appearance -->
+                <section id="appearance" class="settings-section glass-card">
+                    <div class="settings-section-header">
+                        <span class="settings-section-icon" aria-hidden="true">🎨</span>
+                        <h3>Appearance</h3>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">
-                        💾 Save Preferences
-                    </button>
-                </form>
+                    <div class="settings-toggle-row">
+                        <div class="settings-toggle-info">
+                            <h4>Theme</h4>
+                            <p>Dark mode is optimized for the premium experience</p>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" data-theme-toggle onclick="toggleTheme()">🌙 Dark Mode</button>
+                    </div>
+
+                    <div class="form-group" style="margin-top:1.5rem;">
+                        <label>Accent Color</label>
+                        <div class="accent-colors" role="group" aria-label="Accent color">
+                            <button type="button" class="accent-swatch violet selected" data-accent="violet" aria-label="Violet accent" onclick="setAccentColor('violet')"></button>
+                            <button type="button" class="accent-swatch blue" data-accent="blue" aria-label="Blue accent" onclick="setAccentColor('blue')"></button>
+                            <button type="button" class="accent-swatch emerald" data-accent="emerald" aria-label="Emerald accent" onclick="setAccentColor('emerald')"></button>
+                            <button type="button" class="accent-swatch rose" data-accent="rose" aria-label="Rose accent" onclick="setAccentColor('rose')"></button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Danger Zone -->
+                <section id="danger" class="settings-section glass-card danger-zone">
+                    <div class="settings-section-header">
+                        <span class="settings-section-icon" aria-hidden="true">⚠️</span>
+                        <h3>Danger Zone</h3>
+                    </div>
+                    <p class="danger-description">
+                        Permanently delete your account and all associated data. This action <strong>cannot be undone</strong>.
+                    </p>
+                    <ul class="danger-list">
+                        <li>All journal entries will be permanently deleted</li>
+                        <li>Your AI analysis history will be removed</li>
+                        <li>Weekly summaries and streak data will be lost</li>
+                    </ul>
+                    <button class="btn btn-danger-outline" id="deleteAccountBtn" type="button">🗑️ Delete My Account</button>
+                </section>
             </div>
-
-
         </div>
     </div>
 
-    <!-- Include JavaScript -->
+    <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <div class="modal-icon">🚨</div>
+            <h2 class="modal-title danger">Delete Your Account?</h2>
+            <p class="modal-body">
+                You are about to permanently delete <strong id="modalUsername"></strong>'s account and all associated data.
+            </p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancel</button>
+                <button class="btn btn-danger" id="modalConfirmBtn" type="button">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/theme.js"></script>
     <script src="js/api.js"></script>
-
+    <script src="js/utils.js"></script>
+    <script src="js/layout.js"></script>
     <script>
-        // ============================================
-        // AUTHENTICATION CHECK
-        // ============================================
+        initAppLayout('settings');
 
-        if (!isLoggedIn()) {
-            window.location.href = 'index.html';
+        const username = getUsername() || 'User';
+        document.getElementById('profileUsername').textContent = username;
+        document.getElementById('avatarInitials').textContent = username.slice(0, 2).toUpperCase();
+        document.getElementById('modalUsername').textContent = username;
+
+        syncThemeControls();
+        const savedAccent = localStorage.getItem('accentColor') || 'violet';
+        setAccentColor(savedAccent);
+
+        // Settings nav scroll spy
+        document.querySelectorAll('.settings-nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                document.querySelectorAll('.settings-nav-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        // Local AI prefs
+        const AI_PREFS_KEY = 'journalAiPrefs';
+        function loadAiPrefs() {
+            try {
+                const prefs = JSON.parse(localStorage.getItem(AI_PREFS_KEY) || '{}');
+                document.getElementById('aiEmotionAnalysis').checked = prefs.emotionAnalysis !== false;
+                document.getElementById('aiMotivationalQuotes').checked = prefs.motivationalQuotes !== false;
+                document.getElementById('aiSmartInsights').checked = prefs.smartInsights !== false;
+                document.getElementById('reminderEnabled').checked = !!prefs.reminderEnabled;
+            } catch (e) { /* ignore */ }
         }
+        function saveAiPrefs() {
+            localStorage.setItem(AI_PREFS_KEY, JSON.stringify({
+                emotionAnalysis: document.getElementById('aiEmotionAnalysis').checked,
+                motivationalQuotes: document.getElementById('aiMotivationalQuotes').checked,
+                smartInsights: document.getElementById('aiSmartInsights').checked,
+                reminderEnabled: document.getElementById('reminderEnabled').checked
+            }));
+        }
+        ['aiEmotionAnalysis', 'aiMotivationalQuotes', 'aiSmartInsights', 'reminderEnabled'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => { saveAiPrefs(); showToast('Preference saved', 'info'); });
+        });
+        loadAiPrefs();
 
-        // ============================================
-        // GET PAGE ELEMENTS
-        // ============================================
-
-        const navUsername = document.getElementById('navUsername');
-        const dashboardBtn = document.getElementById('dashboardBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const messageContainer = document.getElementById('messageContainer');
-
-        // Forms
-        const preferencesForm = document.getElementById('preferencesForm');
-
-        // Preference inputs
+        let savedEmail = '';
         const emailInput = document.getElementById('emailInput');
-        const weeklySummaryEnabled = document.getElementById('weeklySummaryEnabled');
-        const weeklySummaryDay = document.getElementById('weeklySummaryDay');
-        const emailNotificationsEnabled = document.getElementById('emailNotificationsEnabled');
+        const emailStatusBadge = document.getElementById('emailStatusBadge');
+        const emailStatusText = document.getElementById('emailStatusText');
+        const savePrefsBtn = document.getElementById('savePrefsBtn');
 
-        // ============================================
-        // DISPLAY USERNAME
-        // ============================================
-
-        const username = getUsername();
-        if (username) {
-            navUsername.textContent = `Welcome, ${username}!`;
+        function setEmailState(email) {
+            savedEmail = (email || '').trim();
+            if (savedEmail) {
+                emailInput.value = savedEmail;
+                emailStatusText.textContent = `Email configured: ${savedEmail}`;
+                emailStatusBadge.classList.add('visible');
+                document.getElementById('profileEmail').textContent = savedEmail;
+                savePrefsBtn.textContent = '✏️ Update Preferences';
+            } else {
+                emailStatusBadge.classList.remove('visible');
+                savePrefsBtn.textContent = '💾 Save Preferences';
+            }
         }
 
-        // ============================================
-        // BUTTON EVENT LISTENERS
-        // ============================================
+        async function loadUserPreferences() {
+            try {
+                const data = await getCurrentUser();
+                if (!data) return;
+                setEmailState(data.email || '');
+                const prefs = data.preferences || {};
+                document.getElementById('weeklySummaryEnabled').checked = !!prefs.weeklySummaryEnabled;
+                document.getElementById('emailNotificationsEnabled').checked = !!prefs.emailNotificationsEnabled;
+                if (prefs.weeklySummaryDay != null) {
+                    document.getElementById('weeklySummaryDay').value = String(prefs.weeklySummaryDay);
+                }
+            } catch (e) { console.warn(e); }
+        }
 
-        dashboardBtn.addEventListener('click', () => {
-            window.location.href = 'dashboard.html';
-        });
-
-        logoutBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to logout?')) {
-                logout();
-            }
-        });
-
-        // ============================================
-        // FORM HANDLERS
-        // ============================================
-
-        // Save Preferences
-        preferencesForm.addEventListener('submit', async (e) => {
+        document.getElementById('preferencesForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const enteredEmail = emailInput.value.trim();
+            if (!enteredEmail) { showToast('Please enter your email.', 'error'); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(enteredEmail)) {
+                showToast('Please enter a valid email.', 'error');
+                return;
+            }
+
+            savePrefsBtn.disabled = true;
+            savePrefsBtn.textContent = '⏳ Saving…';
+            saveAiPrefs();
 
             try {
-                showLoading();
-
                 await updatePreferences(
-                    emailInput.value,
-                    weeklySummaryEnabled.checked,
-                    parseInt(weeklySummaryDay.value),
-                    emailNotificationsEnabled.checked
+                    enteredEmail,
+                    document.getElementById('weeklySummaryEnabled').checked,
+                    parseInt(document.getElementById('weeklySummaryDay').value),
+                    document.getElementById('emailNotificationsEnabled').checked
                 );
-
-                hideLoading();
-                showMessage('Preferences saved successfully!', 'success');
-
-            } catch (error) {
-                hideLoading();
-                showMessage('Failed to save preferences. Please try again.', 'error');
+                setEmailState(enteredEmail);
+                showToast('Preferences saved successfully!', 'success');
+            } catch {
+                showToast('Failed to save preferences.', 'error');
+            } finally {
+                savePrefsBtn.disabled = false;
+                savePrefsBtn.textContent = savedEmail ? '✏️ Update Preferences' : '💾 Save Preferences';
             }
         });
 
+        const deleteModal = document.getElementById('deleteModal');
+        document.getElementById('deleteAccountBtn').addEventListener('click', () => deleteModal.classList.add('visible'));
+        document.getElementById('modalCancelBtn').addEventListener('click', () => deleteModal.classList.remove('visible'));
+        deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) deleteModal.classList.remove('visible'); });
 
-
-        // ============================================
-        // HELPER FUNCTIONS
-        // ============================================
-
-        function showLoading() {
-            loadingSpinner.style.display = 'block';
-        }
-
-        function hideLoading() {
-            loadingSpinner.style.display = 'none';
-        }
-
-        function showMessage(message, type) {
-            messageContainer.textContent = message;
-            messageContainer.className = `message-container message-${type}`;
-            messageContainer.style.display = 'block';
-
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                messageContainer.style.display = 'none';
-            }, 5000);
-        }
-    </script>
-
-    <!-- Dark Mode Toggle -->
-    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-        <span id="themeIcon">🌙</span>
-    </button>
-
-    <script>
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-
-            document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-        }
-
-        // Load saved theme
-        (function () {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-
-            const themeIcon = document.getElementById('themeIcon');
-            if (themeIcon) {
-                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        document.getElementById('modalConfirmBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('modalConfirmBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-sm"></span> Deleting…';
+            try {
+                await deleteUser();
+                showToast('Account deleted. Redirecting…', 'info');
+                setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+            } catch {
+                deleteModal.classList.remove('visible');
+                showToast('Failed to delete account.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Confirm Delete';
             }
-        })();
+        });
+
+        loadUserPreferences();
     </script>
 </body>
 

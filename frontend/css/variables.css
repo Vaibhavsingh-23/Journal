@@ -1,0 +1,93 @@
+:root {
+  /* Colors */
+  --bg-primary: #0f172a;
+  --bg-secondary: #111827;
+  --bg-card: #1e293b;
+  --bg-card-hover: #243447;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.12);
+
+  --gradient-primary: linear-gradient(135deg, #8b5cf6, #6366f1);
+  --gradient-primary-hover: linear-gradient(135deg, #9d6ff7, #7577f2);
+  --gradient-glow: rgba(139, 92, 246, 0.35);
+
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  --success: #22c55e;
+  --success-bg: rgba(34, 197, 94, 0.12);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.12);
+
+  --accent-purple: #8b5cf6;
+  --accent-indigo: #6366f1;
+  --accent-blue: #3b82f6;
+  --accent-orange: #f97316;
+  --accent-emerald: #10b981;
+
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --text-hero: 3rem;
+  --text-page: 2.25rem;
+  --text-section: 1.5rem;
+  --text-card: 1.125rem;
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+  --text-xs: 0.75rem;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Layout */
+  --sidebar-width: 260px;
+  --header-height: 72px;
+  --content-max: 1280px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* Effects */
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.25);
+  --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.15);
+  --blur-glass: blur(16px);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Mood colors */
+  --mood-happy: #22c55e;
+  --mood-sad: #6366f1;
+  --mood-anxious: #f59e0b;
+  --mood-angry: #ef4444;
+  --mood-calm: #06b6d4;
+  --mood-neutral: #94a3b8;
+}
+
+[data-accent="violet"] { --gradient-primary: linear-gradient(135deg, #8b5cf6, #6366f1); }
+[data-accent="blue"] { --gradient-primary: linear-gradient(135deg, #3b82f6, #2563eb); }
+[data-accent="emerald"] { --gradient-primary: linear-gradient(135deg, #10b981, #059669); }
+[data-accent="rose"] { --gradient-primary: linear-gradient(135deg, #f43f5e, #e11d48); }
+
+[data-theme="light"] {
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #e2e8f0;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --border: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.12);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.08);
+}

@@ -4,27 +4,21 @@ import com.example.dto.GeminiRequest;
 import com.example.dto.GeminiResponse;
 import com.example.dto.JournalAnalysis;
 import com.example.dto.WeeklyAiReflection;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import com.example.dto.WeeklyAiReflection;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 
 import java.util.List;
 
 @Service
 @Slf4j
-public class  GeminiService {
+public class GeminiService {
 
-    @Autowired
-    private RestTemplate restTemplate;
-
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -32,57 +26,93 @@ public class  GeminiService {
     @Value("${gemini.api.url}")
     private String apiUrl;
 
+    public GeminiService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    // -----------------------------------------------------------------------
+    // Public API
+    // -----------------------------------------------------------------------
+
     /**
-     * Analyze journal entry using Gemini API
-     * Returns mood, emotions, summary, motivational thought, and sentiment score
+     * Analyze a journal entry using Gemini.
+     * Returns mood, emotions, summary, motivational thought, and sentiment score.
+     * Falls back gracefully if the API fails.
      */
     public JournalAnalysis analyzeJournalEntry(String journalContent) {
         try {
-            // Step 1: Build the prompt for Gemini
             String prompt = buildAnalysisPrompt(journalContent);
-
-            // Step 2: Create request payload
-            GeminiRequest request = GeminiRequest.create(prompt);
-
-            // Step 3: Set headers
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            // Step 4: Create HTTP entity
-            HttpEntity<GeminiRequest> entity = new HttpEntity<>(request, headers);
-
-            // Step 5: Build URL with API key
-            String urlWithKey = apiUrl + "?key=" + apiKey;
-
-            log.info("Calling Gemini API for journal analysis...");
-
-            // Step 6: Make POST request to Gemini
-            ResponseEntity<GeminiResponse> response = restTemplate.exchange(
-                    urlWithKey,
-                    HttpMethod.POST,
-                    entity,
-                    GeminiResponse.class
-            );
-
-            // Step 7: Parse response
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                String generatedText = response.getBody().getGeneratedText();
-                log.info("Gemini analysis completed successfully");
-                return parseAnalysisResponse(generatedText);
-            } else {
-                log.error("Gemini API returned non-OK status: {}", response.getStatusCode());
-                return createFallbackAnalysis();
-            }
-
+            String generatedText = callGemini(prompt);
+            return parseAnalysisResponse(generatedText);
         } catch (Exception e) {
-            log.error("Error calling Gemini API: {}", e.getMessage(), e);
+            log.error("Error calling Gemini API for analysis: {}", e.getMessage(), e);
             return createFallbackAnalysis();
         }
     }
 
     /**
-     * Build a structured prompt for Gemini to analyze the journal entry
+     * Generate a weekly reflection using Gemini.
+     * Returns reflectionText, trend (IMPROVING/DECLINING/MIXED), and a suggestion.
+     * Throws on failure — caller should handle with a deterministic fallback.
      */
+    public WeeklyAiReflection generateWeeklyReflection(String weeklySignal) {
+        try {
+            String prompt = buildWeeklyReflectionPrompt(weeklySignal);
+            String generatedText = callGemini(prompt);
+
+            // Strip markdown code fences if Gemini wraps JSON in ```json ... ```
+            String cleaned = generatedText
+                    .replaceAll("(?s)```json\\s*", "")
+                    .replaceAll("(?s)```\\s*", "")
+                    .trim();
+
+            return objectMapper.readValue(cleaned, WeeklyAiReflection.class);
+
+        } catch (Exception e) {
+            log.error("Weekly AI reflection failed", e);
+            throw new RuntimeException("Weekly AI reflection failed", e);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Private helpers
+    // -----------------------------------------------------------------------
+
+    private String callGemini(String prompt) {
+        GeminiRequest request = GeminiRequest.create(prompt);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        // Best practice: Use the header instead of the URL parameter
+        // Trim the API key to remove any trailing carriage returns from .env parsing on Windows
+        String finalKey = apiKey != null ? apiKey.trim() : "";
+        headers.set("x-goog-api-key", finalKey);
+
+        log.info("DEBUG: API Key being used starts with: {}", finalKey.length() >= 4 ? finalKey.substring(0, 4) : finalKey);
+
+        HttpEntity<GeminiRequest> entity = new HttpEntity<>(request, headers);
+        String url = apiUrl != null ? apiUrl.trim() : "";
+
+        log.info("Calling Gemini API...");
+
+        ResponseEntity<GeminiResponse> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                GeminiResponse.class
+        );
+
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            String text = response.getBody().getGeneratedText();
+            if (text != null) {
+                log.info("Gemini call successful.");
+                return text;
+            }
+        }
+
+        throw new RuntimeException("Gemini returned empty or non-OK response: " + response.getStatusCode());
+    }
+
     private String buildAnalysisPrompt(String journalContent) {
         return String.format("""
                 Analyze the following journal entry and provide:
@@ -93,7 +123,7 @@ public class  GeminiService {
                 4. **Motivational Thought**: Give a personalized, encouraging thought or quote based on the entry (1-2 sentences)
                 5. **Sentiment Score**: Rate overall sentiment from -1.0 (very negative) to 1.0 (very positive), 0.0 is neutral
                 
-                Format your response EXACTLY like this:
+                Format your response EXACTLY like this (no extra text):
                 Mood: [mood]
                 Emotions: [emotion1, emotion2, emotion3]
                 Summary: [summary text]
@@ -105,12 +135,35 @@ public class  GeminiService {
                 """, journalContent);
     }
 
+    private String buildWeeklyReflectionPrompt(String weeklySignal) {
+        return """
+                You are an assistant that writes a neutral weekly reflection for a journaling app.
+                
+                Rules:
+                - Do NOT address the user directly
+                - Do NOT give productivity or medical advice
+                - Keep tone neutral and reflective
+                
+                Tasks:
+                1. Write a short weekly reflection (3–4 sentences)
+                2. Identify emotional trend: IMPROVING, DECLINING, or MIXED
+                3. Suggest ONE gentle emotional reflection step
+                
+                Return STRICT JSON (no markdown code fences) in this exact format:
+                {
+                  "reflectionText": "...",
+                  "trend": "IMPROVING | DECLINING | MIXED",
+                  "suggestion": "..."
+                }
+                
+                Weekly data:
+                %s
+                """.formatted(weeklySignal);
+    }
 
     private JournalAnalysis parseAnalysisResponse(String responseText) {
         try {
             JournalAnalysis analysis = new JournalAnalysis();
-
-            // Parse each field using line-by-line extraction
             String[] lines = responseText.split("\n");
 
             for (String line : lines) {
@@ -124,21 +177,19 @@ public class  GeminiService {
                     analysis.setMotivationalThought(extractValue(line));
                 } else if (line.startsWith("Sentiment Score:")) {
                     try {
-                        String scoreStr = extractValue(line).trim();
-                        analysis.setSentimentScore(Double.parseDouble(scoreStr));
+                        analysis.setSentimentScore(Double.parseDouble(extractValue(line).trim()));
                     } catch (NumberFormatException e) {
                         analysis.setSentimentScore(0.0);
                     }
                 }
             }
 
-            // Validate and set defaults if needed
-            if (analysis.getMood() == null) analysis.setMood("Neutral");
-            if (analysis.getEmotions() == null) analysis.setEmotions("Mixed");
-            if (analysis.getSummary() == null) analysis.setSummary("Journal entry recorded");
-            if (analysis.getMotivationalThought() == null)
-                analysis.setMotivationalThought("Keep journaling!");
-            if (analysis.getSentimentScore() == null) analysis.setSentimentScore(0.0);
+            // Set defaults for any missing fields
+            if (analysis.getMood() == null)              analysis.setMood("Neutral");
+            if (analysis.getEmotions() == null)          analysis.setEmotions("Mixed");
+            if (analysis.getSummary() == null)           analysis.setSummary("Journal entry recorded.");
+            if (analysis.getMotivationalThought() == null) analysis.setMotivationalThought("Keep journaling!");
+            if (analysis.getSentimentScore() == null)   analysis.setSentimentScore(0.0);
 
             return analysis;
 
@@ -148,9 +199,6 @@ public class  GeminiService {
         }
     }
 
-    /**
-     * Extract value after colon in format "Key: Value"
-     */
     private String extractValue(String line) {
         int colonIndex = line.indexOf(":");
         if (colonIndex != -1 && colonIndex < line.length() - 1) {
@@ -159,83 +207,13 @@ public class  GeminiService {
         return "";
     }
 
-    /**
-     * Create fallback analysis if API fails
-     */
     private JournalAnalysis createFallbackAnalysis() {
         JournalAnalysis analysis = new JournalAnalysis();
         analysis.setMood("Neutral");
         analysis.setEmotions("Unable to analyze");
-        analysis.setSummary("Journal entry saved. AI analysis unavailable.");
+        analysis.setSummary("Journal entry saved. AI analysis unavailable at this time.");
         analysis.setMotivationalThought("Every entry is a step forward. Keep writing!");
         analysis.setSentimentScore(0.0);
         return analysis;
     }
-
-    public WeeklyAiReflection generateWeeklyReflection(String weeklySignal) {
-
-        try {
-            String prompt = """
-                    You are an assistant that writes a neutral weekly reflection for a journaling app.
-                    
-                    Rules:
-                    - Do NOT address the user directly
-                    - Do NOT give productivity or medical advice
-                    - Keep tone neutral and reflective
-                    
-                    Tasks:
-                    1. Write a short weekly reflection (3–4 sentences)
-                    2. Identify emotional trend: IMPROVING, DECLINING, or MIXED
-                    3. Suggest ONE gentle emotional reflection step
-                    
-                    Return STRICT JSON in this format:
-                    {
-                      "reflectionText": "...",
-                      "trend": "IMPROVING | DECLINING | MIXED",
-                      "suggestion": "..."
-                    }
-                    
-                    Weekly data:
-                    %s
-                    """.formatted(weeklySignal);
-
-            GeminiRequest request = GeminiRequest.create(prompt);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            HttpEntity<GeminiRequest> entity = new HttpEntity<>(request, headers);
-            String urlWithKey = apiUrl + "?key=" + apiKey;
-
-            log.info("Calling Gemini API for weekly reflection...");
-
-            ResponseEntity<GeminiResponse> response = restTemplate.exchange(
-                    urlWithKey,
-                    HttpMethod.POST,
-                    entity,
-                    GeminiResponse.class
-            );
-
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                String generatedText = response.getBody().getGeneratedText();
-                return objectMapper.readValue(generatedText, WeeklyAiReflection.class);
-            }
-
-            throw new RuntimeException("Gemini weekly reflection failed");
-
-        } catch (Exception e) {
-            log.error("Weekly AI reflection failed", e);
-            throw new RuntimeException("Weekly AI reflection failed", e);
-        }
-    }
-
-
-
-    @Deprecated
-    public String generateWeeklySummaryFromDailySummaries(List<String> dailySummaries) {
-        // TODO: Implement weekly AI summary using Gemini
-        return String.join(" ", dailySummaries);
-    }
-
-
 }

@@ -1,0 +1,31 @@
+# Test profile — uses safe placeholder values so the Spring context loads without
+# real MongoDB, Gmail, or Gemini connections.
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/test_db
+      database: test_db
+      auto-index-creation: false
+  mail:
+    host: localhost
+    port: 25
+    username: test@test.com
+    password: test-password
+
+gemini:
+  api:
+    key: test-gemini-key
+    url: http://localhost:9999/gemini
+
+jwt:
+  secret: test-jwt-secret-key-that-is-definitely-long-enough-for-HS256
+  expiry-ms: 3600000
+
+server:
+  port: 0   # random port for tests
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
