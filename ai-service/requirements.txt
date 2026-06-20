@@ -1,0 +1,24 @@
+# Journal AI Service — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# ── Web framework ───────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.6
+
+# ── Google Gemini (embeddings + generative AI) ──────────────
+langchain-google-genai>=1.0.10
+google-generativeai>=0.7.2
+
+# ── Vector database ─────────────────────────────────────────
+# chromadb 0.5.x pins numpy<2.0 which has no pre-built wheel
+# for Python 3.14 and requires a C compiler to build from source.
+# chromadb 0.6+ lifts that restriction and ships its own wheels.
+chromadb>=0.6.0
+
+# ── MongoDB driver ──────────────────────────────────────────
+# NOTE: pymongo ships its own 'bson' module — do NOT add
+# the standalone 'bson' package; they conflict with each other.
+pymongo[srv]>=4.9.0
+
+# ── Environment variable loading ────────────────────────────
+python-dotenv>=1.0.1
