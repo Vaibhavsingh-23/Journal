@@ -29,6 +29,7 @@ class JournalEntryServiceTest {
     @Mock private UserService userService;
     @Mock private GeminiService geminiService;
     @Mock private UserProgressCommandService userProgressService;
+    @Mock private AiEmbeddingService aiEmbeddingService;
 
     private JournalEntryMapper mapper;
     private JournalEntryService journalEntryService;
@@ -40,7 +41,7 @@ class JournalEntryServiceTest {
     void setUp() {
         mapper = new JournalEntryMapper();
         journalEntryService = new JournalEntryService(
-                journalEntryRepository, userService, geminiService, userProgressService, mapper);
+                journalEntryRepository, userService, geminiService, userProgressService, mapper, aiEmbeddingService);
 
         userId = new ObjectId();
         testUser = new User();
