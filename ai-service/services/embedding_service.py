@@ -16,7 +16,7 @@ import logging
 from typing import Optional
 
 from dotenv import load_dotenv
-import chromadb
+from pinecone import Pinecone
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
@@ -40,17 +40,14 @@ embeddings = GoogleGenerativeAIEmbeddings(
     google_api_key=os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
 )
 
-# ChromaDB persistent client
-_chroma_path = os.getenv("CHROMA_PERSIST_PATH", "./chroma_store")
-chroma_client = chromadb.PersistentClient(path=_chroma_path)
+# Pinecone client
+pinecone_client = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 
-# ChromaDB collection — created if it does not already exist
-collection = chroma_client.get_or_create_collection(
-    name="journal_entries",
-    metadata={"hnsw:space": "cosine"},  # cosine similarity for semantic search
-)
+# Pinecone index
+pinecone_index_name = os.getenv("PINECONE_INDEX")
+index = pinecone_client.Index(pinecone_index_name)
 
-log.info("ChromaDB initialised at '%s'. Collection: 'journal_entries'.", _chroma_path)
+log.info("Pinecone initialised for index '%s'.", pinecone_index_name)
 
 
 # ---------------------------------------------------------------------------
@@ -65,7 +62,7 @@ def embed_single_entry(
     date: str,
 ) -> dict:
     """
-    Embed a single journal entry and upsert it into ChromaDB.
+    Embed a single journal entry and upsert it into Pinecone.
 
     Args:
         entry_id (str): Unique MongoDB ObjectId string of the journal entry.
@@ -87,18 +84,19 @@ def embed_single_entry(
         # Generate embedding vector
         vector: list[float] = embeddings.embed_query(text)
 
-        # Upsert into ChromaDB (add replaces a document with the same id)
-        collection.upsert(
-            ids=[entry_id],
-            embeddings=[vector],
-            documents=[text],
-            metadatas=[
+        # Upsert into Pinecone
+        index.upsert(
+            vectors=[
                 {
-                    "user_id": user_id,
-                    "date": date,
-                    "entry_id": entry_id,
+                    "id": entry_id,
+                    "values": vector,
+                    "metadata": {
+                        "user_id": user_id,
+                        "date": date,
+                        "text": text,
+                    }
                 }
-            ],
+            ]
         )
 
         log.info("Successfully embedded entry_id=%s.", entry_id)
@@ -112,9 +110,9 @@ def embed_single_entry(
 def embed_all_entries(user_id: str) -> dict:
     """
     Fetch every journal entry for *user_id* from MongoDB and embed them all
-    into ChromaDB in one batch operation.
+    into Pinecone in one batch operation.
 
-    Entries that already exist in ChromaDB are silently overwritten (upsert).
+    Entries that already exist in Pinecone are silently overwritten (upsert).
     Entries with empty content are skipped.
 
     Args:

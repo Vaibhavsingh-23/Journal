@@ -32,10 +32,10 @@ from dotenv import load_dotenv
 # from the project root so the module path is `services.embedding_service`.
 try:
     # When imported as part of the FastAPI app (from project root)
-    from services.embedding_service import embeddings, collection
+    from services.embedding_service import embeddings, index
 except ModuleNotFoundError:
     # When run / tested directly inside the services/ directory
-    from embedding_service import embeddings, collection  # type: ignore
+    from embedding_service import embeddings, index  # type: ignore
 
 # ---------------------------------------------------------------------------
 # Bootstrap
@@ -183,20 +183,21 @@ def ask_journal(question: str, user_id: str) -> dict:
         log.info("Embedding question for RAG (user_id=%s): '%s'", user_id, question[:80])
         question_vector: list[float] = embeddings.embed_query(question)
 
-        # ── Step 2: Semantic search in ChromaDB (scoped to this user) ─────────
-        results = collection.query(
-            query_embeddings=[question_vector],
-            n_results=5,
-            where={"user_id": user_id},
-            include=["documents", "metadatas"],
+        # ── Step 2: Semantic search in Pinecone (scoped to this user) ─────────
+        results = index.query(
+            vector=question_vector,
+            top_k=5,
+            filter={"user_id": user_id},
+            include_metadata=True,
         )
 
-        retrieved_docs: list[str] = results.get("documents", [[]])[0]
-        retrieved_meta: list[dict] = results.get("metadatas", [[]])[0]
+        matches = results.get("matches", [])
+        retrieved_docs: list[str] = [match["metadata"]["text"] for match in matches if "text" in match.get("metadata", {})]
+        retrieved_meta: list[dict] = [match.get("metadata", {}) for match in matches]
 
         # ── Step 3: Handle no results ─────────────────────────────────────────
         if not retrieved_docs:
-            log.info("No journal entries found in ChromaDB for user_id=%s.", user_id)
+            log.info("No journal entries found in Pinecone for user_id=%s.", user_id)
             return {
                 "answer": (
                     "You haven't written enough entries yet for me to answer that."

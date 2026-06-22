@@ -10,10 +10,8 @@ langchain-google-genai>=1.0.10
 google-generativeai>=0.7.2
 
 # ── Vector database ─────────────────────────────────────────
-# chromadb 0.5.x pins numpy<2.0 which has no pre-built wheel
-# for Python 3.14 and requires a C compiler to build from source.
-# chromadb 0.6+ lifts that restriction and ships its own wheels.
-chromadb>=0.6.0
+# pinecone-client is used for the cloud vector database.
+pinecone-client>=4.0.0
 
 # ── MongoDB driver ──────────────────────────────────────────
 # NOTE: pymongo ships its own 'bson' module — do NOT add
