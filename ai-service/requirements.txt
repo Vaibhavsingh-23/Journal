@@ -24,6 +24,4 @@ pymongo[srv]>=4.9.0
 python-dotenv>=1.0.1
 
 # ── Additional Packages ─────────────────────────────────────
-openai-whisper
-ffmpeg-python
 python-multipart
