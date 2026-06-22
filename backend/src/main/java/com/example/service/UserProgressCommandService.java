@@ -42,7 +42,7 @@ public class UserProgressCommandService {
         // 2. Extract distinct local dates in the user's timezone, sorted descending
         java.util.List<LocalDate> entryDates = entries.stream()
                 .filter(e -> e.getDate() != null)
-                .map(e -> e.getDate().atZone(java.time.ZoneId.of("UTC")).withZoneSameInstant(userZone).toLocalDate())
+                .map(e -> e.getDate().atZone(java.time.ZoneId.systemDefault()).withZoneSameInstant(userZone).toLocalDate())
                 .distinct()
                 .sorted(java.util.Comparator.reverseOrder())
                 .toList();
@@ -83,6 +83,16 @@ public class UserProgressCommandService {
         );
 
         progress.setLastEntryDate(today);
+
+        // Track the exact timestamp of the last entry
+        if (!entries.isEmpty()) {
+            java.time.LocalDateTime latestTime = entries.stream()
+                    .map(com.example.entity.JournalEntry::getDate)
+                    .filter(java.util.Objects::nonNull)
+                    .max(java.time.LocalDateTime::compareTo)
+                    .orElse(null);
+            progress.setLastEntryAt(latestTime);
+        }
         
         // Recalculate total entries
         progress.setTotalEntries(entries.size());

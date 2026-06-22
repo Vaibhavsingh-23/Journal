@@ -12,4 +12,5 @@ public class UserProgressDTO {
     private int weeklyEntryCount;
     private int totalEntries;
     private LocalDate lastEntryDate;
+    private java.time.LocalDateTime lastEntryAt;
 }

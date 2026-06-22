@@ -28,6 +28,9 @@ public class UserProgress {
     // last day user wrote an entry
     private LocalDate lastEntryDate;
 
+    // exact timestamp of the last entry
+    private java.time.LocalDateTime lastEntryAt;
+
     // counters
     private int weeklyEntryCount = 0;
     private int totalEntries = 0;

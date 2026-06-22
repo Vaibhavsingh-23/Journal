@@ -47,6 +47,7 @@ public class DashboardController {
         dto.setWeeklyEntryCount(progress.getWeeklyEntryCount());
         dto.setTotalEntries(progress.getTotalEntries());
         dto.setLastEntryDate(progress.getLastEntryDate());
+        dto.setLastEntryAt(progress.getLastEntryAt());
         return dto;
     }
 
