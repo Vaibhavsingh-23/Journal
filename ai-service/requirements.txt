@@ -10,8 +10,8 @@ langchain-google-genai>=1.0.10
 google-generativeai>=0.7.2
 
 # ── Vector database ─────────────────────────────────────────
-# pinecone-client is used for the cloud vector database.
-pinecone-client>=4.0.0
+# pinecone is used for the cloud vector database.
+pinecone>=4.0.0
 
 # ── MongoDB driver ──────────────────────────────────────────
 # NOTE: pymongo ships its own 'bson' module — do NOT add
