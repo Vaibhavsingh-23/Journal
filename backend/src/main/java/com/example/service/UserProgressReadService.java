@@ -16,12 +16,22 @@ public class UserProgressReadService {
     }
 
     public UserProgress getProgressForUser(ObjectId userId) {
-        return userProgressRepository
+        UserProgress progress = userProgressRepository
                 .findByUserId(userId)
                 .orElseGet(() -> {
                     UserProgress empty = new UserProgress();
                     empty.setUserId(userId);
                     return empty;
                 });
+
+        // Dynamic streak calculation based on time passed
+        if (progress.getLastEntryDate() != null) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            if (progress.getLastEntryDate().isBefore(today.minusDays(1))) {
+                progress.setCurrentStreak(0);
+            }
+        }
+
+        return progress;
     }
 }
