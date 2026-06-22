@@ -39,12 +39,14 @@ public class UserProgressCommandService {
 
         LocalDate lastDate = progress.getLastEntryDate();
 
+        boolean isSameDay = false;
+
         if (lastDate == null) {
             // First ever entry
             progress.setCurrentStreak(1);
         } else if (lastDate.equals(today)) {
-            // Multiple entries same day — don't change streak
-            return;
+            // Multiple entries same day — don't change streak but still update counts
+            isSameDay = true;
         } else if (lastDate.equals(today.minusDays(1))) {
             // Consecutive day — extend streak
             progress.setCurrentStreak(progress.getCurrentStreak() + 1);
