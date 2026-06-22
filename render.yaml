@@ -12,3 +12,14 @@ services:
       - key: SERVER_PORT
         value: 10000
     healthCheckPath: /journal/actuator/health
+
+  - type: web
+    name: journal-ai-service
+    runtime: python
+    buildCommand: "cd ai-service && pip install -r requirements.txt"
+    startCommand: "cd ai-service && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    plan: free
+    region: singapore
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
