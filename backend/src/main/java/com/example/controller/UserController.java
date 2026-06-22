@@ -44,6 +44,7 @@ public class UserController {
     public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.findByUserName(userDetails.getUsername());
         return ResponseEntity.ok(Map.of(
+                "id", user.getId() != null ? user.getId().toString() : "",
                 "username", user.getUserName(),
                 "email", user.getEmail() != null ? user.getEmail() : "",
                 "preferences", user.getPreferences()

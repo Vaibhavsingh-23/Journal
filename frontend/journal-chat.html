@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal AI Chat — Ask Your Journal</title>
+    <meta name="description" content="Ask questions about your journal using AI. Get insights from your past entries.">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ── Chat page layout ──────────────────────────────────────────── */
+        .chat-page {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - var(--header-height, 0px));
+            max-width: 820px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-6) 0;
+            gap: var(--space-4);
+        }
+
+        .chat-header {
+            flex-shrink: 0;
+        }
+
+        .chat-header h1 {
+            font-size: var(--text-section);
+            font-weight: 700;
+            margin-bottom: var(--space-1);
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .chat-header p {
+            color: var(--text-muted);
+            font-size: var(--text-small);
+        }
+
+        /* ── Suggestion chips ──────────────────────────────────────────── */
+        .chat-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            flex-shrink: 0;
+        }
+
+        .suggestion-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: var(--radius-full);
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+
+        .suggestion-chip:hover {
+            background: rgba(139, 92, 246, 0.18);
+            border-color: rgba(139, 92, 246, 0.4);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        /* ── Message list ──────────────────────────────────────────────── */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+            padding-bottom: var(--space-4);
+            scroll-behavior: smooth;
+        }
+
+        /* Custom scrollbar */
+        .chat-messages::-webkit-scrollbar { width: 5px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: var(--radius-full);
+        }
+
+        /* ── Individual message bubbles ────────────────────────────────── */
+        .message {
+            display: flex;
+            gap: var(--space-3);
+            animation: msgIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: var(--gradient-primary);
+            box-shadow: 0 4px 12px var(--gradient-glow);
+        }
+
+        .message.ai .message-avatar {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            color: #34d399;
+        }
+
+        .message-bubble {
+            max-width: 78%;
+            padding: var(--space-4) var(--space-5);
+            border-radius: var(--radius-md);
+            font-size: var(--text-small);
+            line-height: 1.75;
+            border: 1px solid transparent;
+        }
+
+        .message.user .message-bubble {
+            background: var(--gradient-primary);
+            color: #fff;
+            border-radius: var(--radius-md) var(--radius-sm) var(--radius-md) var(--radius-md);
+            box-shadow: 0 4px 16px var(--gradient-glow);
+        }
+
+        .message.ai .message-bubble {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: var(--border);
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm) var(--radius-md) var(--radius-md) var(--radius-md);
+        }
+
+        /* ── Sources badges inside AI bubble ───────────────────────────── */
+        .message-sources {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            margin-top: var(--space-3);
+            padding-top: var(--space-3);
+            border-top: 1px solid var(--border);
+        }
+
+        .source-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 10px;
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            color: #a78bfa;
+            font-weight: 500;
+        }
+
+        /* ── Typing indicator ──────────────────────────────────────────── */
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            padding: var(--space-4) var(--space-5);
+        }
+
+        .typing-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--accent-purple);
+            border-radius: 50%;
+            animation: typingBounce 1.2s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0);    opacity: 0.4; }
+            30%            { transform: translateY(-7px); opacity: 1;   }
+        }
+
+        /* ── Welcome empty state ───────────────────────────────────────── */
+        .chat-welcome {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: var(--space-12);
+            gap: var(--space-4);
+        }
+
+        .chat-welcome-icon {
+            font-size: 4rem;
+            filter: drop-shadow(0 0 24px rgba(139, 92, 246, 0.4));
+            animation: floatPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes floatPulse {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50%       { transform: translateY(-8px) scale(1.05); }
+        }
+
+        .chat-welcome h2 {
+            font-size: var(--text-card);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chat-welcome p {
+            color: var(--text-muted);
+            font-size: var(--text-small);
+            max-width: 360px;
+            line-height: 1.7;
+        }
+
+        /* ── Input bar ─────────────────────────────────────────────────── */
+        .chat-input-bar {
+            flex-shrink: 0;
+            padding-bottom: var(--space-6);
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: var(--space-3);
+            align-items: flex-end;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-lg);
+            padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+            transition: border-color var(--transition), box-shadow var(--transition);
+            backdrop-filter: var(--blur-glass);
+        }
+
+        .chat-input-form:focus-within {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), var(--shadow-glow);
+        }
+
+        #chatInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: var(--text-body);
+            resize: none;
+            line-height: 1.6;
+            max-height: 140px;
+            min-height: 24px;
+            padding: 0;
+        }
+
+        #chatInput::placeholder { color: var(--text-muted); }
+
+        #sendBtn {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            background: var(--gradient-primary);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+            box-shadow: 0 4px 12px var(--gradient-glow);
+        }
+
+        #sendBtn:hover:not(:disabled) {
+            transform: scale(1.08);
+            box-shadow: 0 6px 20px var(--gradient-glow);
+        }
+
+        #sendBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        #sendBtn svg { width: 20px; height: 20px; }
+
+        .chat-hint {
+            text-align: center;
+            font-size: var(--text-xs);
+            color: var(--text-muted);
+            margin-top: var(--space-2);
+        }
+
+        /* ── Error state ───────────────────────────────────────────────── */
+        .message.error .message-bubble {
+            background: var(--danger-bg);
+            border-color: rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="pageContent" style="display:none;">
+        <div class="chat-page">
+
+            <!-- Header -->
+            <div class="chat-header">
+                <h1>🤖 Ask Your Journal</h1>
+                <p>Ask anything about your past entries — the AI searches your memories to answer.</p>
+            </div>
+
+            <!-- Suggestion chips -->
+            <div class="chat-suggestions" id="chatSuggestions">
+                <button class="suggestion-chip" data-q="What have I been writing about most lately?">📊 What have I written about lately?</button>
+                <button class="suggestion-chip" data-q="What made me happy recently?">😊 What made me happy?</button>
+                <button class="suggestion-chip" data-q="What are my recurring worries or anxieties?">😰 What worries me most?</button>
+                <button class="suggestion-chip" data-q="What goals or plans have I mentioned?">🎯 What are my goals?</button>
+                <button class="suggestion-chip" data-q="Summarize my emotional state over recent entries.">🧠 My emotional state</button>
+            </div>
+
+            <!-- Message list OR welcome screen -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-welcome" id="chatWelcome">
+                    <div class="chat-welcome-icon">📖</div>
+                    <h2>Your journal knows you best</h2>
+                    <p>Ask a question above or pick a suggestion to start exploring your thoughts and memories.</p>
+                </div>
+            </div>
+
+            <!-- Input bar -->
+            <div class="chat-input-bar">
+                <form class="chat-input-form" id="chatForm" autocomplete="off">
+                    <textarea
+                        id="chatInput"
+                        placeholder="Ask anything about your journal…"
+                        rows="1"
+                        aria-label="Ask a question about your journal"
+                        maxlength="500"
+                    ></textarea>
+                    <button type="submit" id="sendBtn" aria-label="Send question">
+                        <!-- Send icon -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </form>
+                <p class="chat-hint">Press Enter to send · Shift+Enter for new line</p>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/layout.js"></script>
+    <script>
+        initAppLayout('journal-chat');
+
+        // ── Config ──────────────────────────────────────────────────────────
+        const AI_BASE = IS_LOCAL
+            ? 'http://localhost:8001'
+            : 'https://your-ai-service.onrender.com'; // update for production
+
+        // ── State ────────────────────────────────────────────────────────────
+        let currentUserId = null;
+        let isLoading     = false;
+
+        // ── DOM refs ─────────────────────────────────────────────────────────
+        const chatMessages   = document.getElementById('chatMessages');
+        const chatWelcome    = document.getElementById('chatWelcome');
+        const chatForm       = document.getElementById('chatForm');
+        const chatInput      = document.getElementById('chatInput');
+        const sendBtn        = document.getElementById('sendBtn');
+        const suggestions    = document.getElementById('chatSuggestions');
+
+        // ── Fetch userId from Spring backend ─────────────────────────────────
+        async function loadUserId() {
+            try {
+                const user = await apiFetch('/user/me');
+                currentUserId = user?.id || user?.userId || null;
+            } catch {
+                // If /user/me doesn't exist, decode JWT as fallback
+                try {
+                    const token = getToken();
+                    if (token) {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        currentUserId = payload.sub || payload.userId || payload.id || null;
+                    }
+                } catch { /* ignore */ }
+            }
+        }
+
+        loadUserId();
+
+        // ── Auto-grow textarea ────────────────────────────────────────────────
+        chatInput.addEventListener('input', () => {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 140) + 'px';
+        });
+
+        // ── Enter = send, Shift+Enter = newline ───────────────────────────────
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!isLoading) chatForm.requestSubmit();
+            }
+        });
+
+        // ── Suggestion chips ──────────────────────────────────────────────────
+        suggestions.addEventListener('click', (e) => {
+            const chip = e.target.closest('.suggestion-chip');
+            if (!chip || isLoading) return;
+            const q = chip.dataset.q;
+            chatInput.value = q;
+            chatInput.style.height = 'auto';
+            chatForm.requestSubmit();
+        });
+
+        // ── Submit ────────────────────────────────────────────────────────────
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = chatInput.value.trim();
+            if (!question || isLoading) return;
+
+            // Hide welcome screen on first message
+            chatWelcome.style.display = 'none';
+
+            // Append user bubble
+            appendMessage('user', question);
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+
+            // Show typing indicator
+            const typingEl = appendTyping();
+            setLoading(true);
+
+            try {
+                // Make sure we have a userId
+                if (!currentUserId) await loadUserId();
+
+                if (!currentUserId) {
+                    removeTyping(typingEl);
+                    appendMessage('error', '⚠️ Could not determine your user ID. Please log out and log back in.');
+                    return;
+                }
+
+                // Call Python AI service
+                const res = await fetch(`${AI_BASE}/ai/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUserId,
+                        question: question
+                    })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`AI service returned ${res.status}`);
+                }
+
+                const data = await res.json();
+                removeTyping(typingEl);
+                appendAiMessage(data.answer || 'No answer returned.', data.sources || []);
+
+            } catch (err) {
+                removeTyping(typingEl);
+                appendMessage('error',
+                    '⚠️ Could not reach the AI service. Make sure the Python service is running on port 8001.');
+                console.error('RAG query error:', err);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        function setLoading(val) {
+            isLoading     = val;
+            sendBtn.disabled = val;
+            chatInput.disabled = val;
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function appendMessage(role, text) {
+            // role: 'user' | 'ai' | 'error'
+            const msg = document.createElement('div');
+            msg.className = `message ${role === 'user' ? 'user' : role === 'error' ? 'ai error' : 'ai'}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = role === 'user' ? '👤' : role === 'error' ? '⚠️' : '🤖';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = text;
+
+            msg.appendChild(avatar);
+            msg.appendChild(bubble);
+            chatMessages.appendChild(msg);
+            scrollToBottom();
+            return msg;
+        }
+
+        function appendAiMessage(text, sources) {
+            const msg = document.createElement('div');
+            msg.className = 'message ai';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = '🤖';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+
+            // 1. Handle incomplete sentences (token cutoff fallback)
+            text = text.trim();
+            if (text && !text.endsWith('.') && !text.endsWith('?') && !text.endsWith('!') && !text.endsWith('"')) {
+                text += '...';
+            }
+
+            // 2. Render Markdown as proper HTML
+            const answerEl = document.createElement('div');
+            // marked.js handles formatting like **, bullet points, and paragraphs
+            answerEl.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text;
+            
+            // Tighten up paragraph margins generated by marked
+            const firstP = answerEl.querySelector('p:first-child');
+            if (firstP) firstP.style.marginTop = '0';
+            const lastP = answerEl.querySelector('p:last-child');
+            if (lastP) lastP.style.marginBottom = '0';
+
+            bubble.appendChild(answerEl);
+
+            // 3. Deduplicate and format sources
+            if (sources && sources.length > 0) {
+                const sourcesEl = document.createElement('div');
+                sourcesEl.className = 'message-sources';
+
+                const label = document.createElement('span');
+                label.style.cssText = 'font-size:0.7rem;color:var(--text-muted);width:100%;';
+                label.textContent = '📎 Based on entries from:';
+                sourcesEl.appendChild(label);
+
+                // Deduplicate and format dates
+                const uniqueDates = [...new Set(sources)];
+                const formattedDates = uniqueDates.map(date => formatDateShort(date) || date);
+
+                // Put all dates on one line separated by dots inside a single tag
+                const tag = document.createElement('span');
+                tag.className = 'source-tag';
+                tag.textContent = formattedDates.join(' · ');
+                sourcesEl.appendChild(tag);
+
+                bubble.appendChild(sourcesEl);
+            }
+
+            msg.appendChild(avatar);
+            msg.appendChild(bubble);
+            chatMessages.appendChild(msg);
+            scrollToBottom();
+        }
+
+        function appendTyping() {
+            const msg = document.createElement('div');
+            msg.className = 'message ai';
+            msg.id = 'typingIndicator';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = '🤖';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+
+            const typing = document.createElement('div');
+            typing.className = 'typing-indicator';
+            [1,2,3].forEach(() => {
+                const dot = document.createElement('div');
+                dot.className = 'typing-dot';
+                typing.appendChild(dot);
+            });
+
+            bubble.appendChild(typing);
+            msg.appendChild(avatar);
+            msg.appendChild(bubble);
+            chatMessages.appendChild(msg);
+            scrollToBottom();
+            return msg;
+        }
+
+        function removeTyping(el) {
+            if (el && el.parentNode) el.parentNode.removeChild(el);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Journal — Journal</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .record-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-6);
+            background: rgba(139, 92, 246, 0.05);
+            border: 1px dashed var(--accent-purple);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-5);
+            transition: all var(--transition);
+        }
+        .record-container.recording {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger);
+            animation: pulse-border 1.5s infinite;
+        }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .record-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 16px var(--gradient-glow);
+            transition: all var(--transition);
+        }
+        .record-btn.recording {
+            background: var(--danger);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+            border-radius: 20%;
+            transform: scale(0.9);
+        }
+        .record-status {
+            margin-top: var(--space-3);
+            font-size: var(--text-small);
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .audio-visualizer {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 24px;
+            margin-top: var(--space-3);
+            display: none;
+        }
+        .audio-bar {
+            width: 4px;
+            background: var(--danger);
+            border-radius: 2px;
+            animation: sound-bounce 0.5s infinite ease-in-out alternate;
+        }
+        .audio-bar:nth-child(1) { height: 40%; animation-delay: 0.1s; }
+        .audio-bar:nth-child(2) { height: 80%; animation-delay: 0.3s; }
+        .audio-bar:nth-child(3) { height: 100%; animation-delay: 0.0s; }
+        .audio-bar:nth-child(4) { height: 60%; animation-delay: 0.2s; }
+        .audio-bar:nth-child(5) { height: 30%; animation-delay: 0.4s; }
+        @keyframes sound-bounce {
+            0% { transform: scaleY(0.5); }
+            100% { transform: scaleY(1); }
+        }
+        .loading-transcript {
+            display: none;
+            align-items: center;
+            gap: var(--space-2);
+            margin-top: var(--space-3);
+            color: var(--text-primary);
+            font-size: var(--text-small);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="pageContent" style="display:none;">
+        <header class="page-header">
+            <h1>🎙️ Voice Journal</h1>
+            <p>Speak your thoughts naturally. We'll transcribe them into an entry.</p>
+        </header>
+
+        <div class="write-container">
+            <div class="write-card glass-card">
+                
+                <!-- Voice Recorder Section -->
+                <div class="record-container" id="recordContainer">
+                    <button type="button" class="record-btn" id="recordBtn" aria-label="Start Recording">
+                        <span id="recordIcon">🎤</span>
+                    </button>
+                    <div class="record-status" id="recordStatus">Click to start recording</div>
+                    
+                    <div class="audio-visualizer" id="audioVisualizer">
+                        <div class="audio-bar"></div><div class="audio-bar"></div>
+                        <div class="audio-bar"></div><div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                    </div>
+                    
+                    <div class="loading-transcript" id="loadingTranscript">
+                        <div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0"></div>
+                        <span>Transcribing with AI...</span>
+                    </div>
+                </div>
+
+                <!-- Manual Form -->
+                <form id="createEntryForm" novalidate>
+                    <div class="form-group">
+                        <input type="text" id="entryTitle" class="form-input write-title-input"
+                            placeholder="Entry title…" required maxlength="100" aria-label="Entry title">
+                    </div>
+                    <div class="form-group">
+                        <textarea id="entryContent" class="form-input write-content"
+                            placeholder="Your transcribed text will appear here. You can also edit or type manually…" required maxlength="5000"
+                            aria-label="Entry content"></textarea>
+                    </div>
+
+                    <div id="errorMessage" class="alert alert-error" style="display:none;" role="alert"></div>
+
+                    <div id="loadingState" class="loading-state" style="display:none;">
+                        <div class="spinner"></div>
+                        <p class="loading-text"><strong>Analyzing your entry with AI…</strong><br>Detecting mood, emotions, and generating insights</p>
+                    </div>
+
+                    <div class="write-meta">
+                        <span class="form-hint"><span id="charCount">0</span> / 5000 characters</span>
+                        <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">💾 Save Entry</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/theme.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/layout.js"></script>
+    <script>
+        initAppLayout('voice-journal');
+
+        // ── Config ───────────────────────────────────────────────────
+        const AI_BASE = IS_LOCAL
+            ? 'http://localhost:8001'
+            : 'https://your-ai-service.onrender.com';
+
+        let currentUserId = null;
+        let isRecording   = false;
+
+        // ── DOM Refs ─────────────────────────────────────────────────
+        const recordBtn       = document.getElementById('recordBtn');
+        const recordIcon      = document.getElementById('recordIcon');
+        const recordStatus    = document.getElementById('recordStatus');
+        const recordContainer = document.getElementById('recordContainer');
+        const audioVisualizer = document.getElementById('audioVisualizer');
+        const loadingTranscript = document.getElementById('loadingTranscript');
+        const createEntryForm = document.getElementById('createEntryForm');
+        const entryTitle      = document.getElementById('entryTitle');
+        const entryContent    = document.getElementById('entryContent');
+        const submitBtn       = document.getElementById('submitBtn');
+        const errorMessage    = document.getElementById('errorMessage');
+        const loadingState    = document.getElementById('loadingState');
+        const charCount       = document.getElementById('charCount');
+
+        // ── User ID ──────────────────────────────────────────────────
+        async function loadUserId() {
+            try {
+                const user = await apiFetch('/user/me');
+                currentUserId = user?.id || null;
+            } catch {
+                try {
+                    const token = getToken();
+                    if (token) {
+                        const p = JSON.parse(atob(token.split('.')[1]));
+                        currentUserId = p.sub || p.userId || p.id || null;
+                    }
+                } catch { /* ignore */ }
+            }
+        }
+        loadUserId();
+
+        // ═══════════════════════════════════════════════════════════
+        // WavRecorder — Web Audio API, zero codec dependency.
+        // Captures raw PCM at 16 kHz (Whisper's native rate) and
+        // encodes a proper WAV blob that ffmpeg/Whisper handles 100%.
+        // ═══════════════════════════════════════════════════════════
+        class WavRecorder {
+            constructor() {
+                this.ctx = this.src = this.proc = this.stream = null;
+                this.gain = this.analyser = null;
+                this._analyserBuf = null;
+                this.chunks = [];
+            }
+
+            async start() {
+                // Request mic with browser-side audio processing
+                this.stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation:  true,
+                        noiseSuppression:  true,
+                        autoGainControl:   true,
+                        sampleRate:        16000
+                    }
+                });
+                this.ctx  = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                this.src  = this.ctx.createMediaStreamSource(this.stream);
+
+                // 3× software gain boost — prevents whisper-quiet recordings
+                this.gain = this.ctx.createGain();
+                this.gain.gain.value = 3.0;
+
+                // Analyser for real-time level meter
+                this.analyser = this.ctx.createAnalyser();
+                this.analyser.fftSize = 256;
+                this._analyserBuf = new Uint8Array(this.analyser.frequencyBinCount);
+
+                this.proc = this.ctx.createScriptProcessor(4096, 1, 1);
+                this.chunks = [];
+                this.proc.onaudioprocess = e =>
+                    this.chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+
+                // Chain: mic → gain → analyser → recorder → speakers (muted)
+                this.src.connect(this.gain);
+                this.gain.connect(this.analyser);
+                this.analyser.connect(this.proc);
+                this.proc.connect(this.ctx.destination);
+            }
+
+            /** Returns 0-1 normalised RMS audio level for the visualiser */
+            getLevel() {
+                if (!this.analyser || !this._analyserBuf) return 0;
+                this.analyser.getByteFrequencyData(this._analyserBuf);
+                const avg = this._analyserBuf.reduce((s, v) => s + v, 0) / this._analyserBuf.length;
+                return avg / 128;
+            }
+
+            stop() {
+                try {
+                    this.proc?.disconnect();
+                    this.gain?.disconnect();
+                    this.src?.disconnect();
+                    this.stream?.getTracks().forEach(t => t.stop());
+                    this.ctx?.close();
+                } catch (_) {}
+                return this._wav();
+            }
+
+            _wav() {
+                const len = this.chunks.reduce((s, c) => s + c.length, 0);
+                const pcm = new Float32Array(len);
+                let off = 0;
+                for (const c of this.chunks) { pcm.set(c, off); off += c.length; }
+                const sr  = this.ctx?.sampleRate || 16000;
+                const buf = new ArrayBuffer(44 + pcm.length * 2);
+                const v   = new DataView(buf);
+                const w   = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o+i, s.charCodeAt(i)); };
+                w(0, 'RIFF'); v.setUint32(4, 36+pcm.length*2, true);
+                w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true);
+                v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+                v.setUint32(24, sr, true); v.setUint32(28, sr*2, true);
+                v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+                w(36, 'data'); v.setUint32(40, pcm.length*2, true);
+                for (let i = 0; i < pcm.length; i++) {
+                    const s = Math.max(-1, Math.min(1, pcm[i]));
+                    v.setInt16(44+i*2, s < 0 ? s*0x8000 : s*0x7FFF, true);
+                }
+                return new Blob([buf], { type: 'audio/wav' });
+            }
+        }
+
+        // ── UI helpers ───────────────────────────────────────────────
+        function setRecordingUI(on) {
+            recordBtn.classList.toggle('recording', on);
+            recordIcon.textContent = on ? '⏹️' : '🎤';
+            recordContainer.classList.toggle('recording', on);
+            recordStatus.textContent  = on ? 'Recording… Click to stop' : 'Click to start recording';
+            audioVisualizer.style.display = on ? 'flex' : 'none';
+            if (on) errorMessage.style.display = 'none';
+        }
+
+        function resetRecordUI() {
+            recordBtn.disabled = false;
+            loadingTranscript.style.display = 'none';
+            setRecordingUI(false);
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorMessage.style.display = 'block';
+        }
+
+        function appendTranscript(text) {
+            if (!text?.trim()) return;
+            const cur = entryContent.value.trim();
+            entryContent.value = cur ? cur + '\n\n' + text.trim() : text.trim();
+            charCount.textContent = entryContent.value.length;
+            if (!entryTitle.value.trim()) {
+                const d = new Date();
+                entryTitle.value = `Voice Note - ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
+            }
+        }
+
+        // ── Whisper upload (WAV) ─────────────────────────────────────
+        async function sendToWhisper(blob) {
+            console.log(`[Whisper] Sending ${blob?.size} bytes WAV`);
+            if (!blob || blob.size < 8000) {
+                showError('Recording was too short or silent. Please speak for at least 2 seconds.');
+                return;
+            }
+            if (!currentUserId) await loadUserId();
+            if (!currentUserId) { showError('Session expired — please refresh and log in.'); return; }
+
+            const fd = new FormData();
+            fd.append('audio', blob, 'voice-note.wav');
+            try {
+                const res  = await fetch(`${AI_BASE}/ai/voice/transcribe?user_id=${currentUserId}`, { method:'POST', body:fd });
+                if (!res.ok) throw new Error(`Server ${res.status}: ${res.statusText}`);
+                const data = await res.json();
+                if (data.status === 'success' && data.transcript?.trim()) {
+                    appendTranscript(data.transcript);
+                    errorMessage.style.display = 'none';
+                } else if (data.status === 'success') {
+                    showError('Whisper heard silence. Please speak louder and try again.');
+                } else {
+                    throw new Error(data.message || 'Transcription failed');
+                }
+            } catch (err) {
+                console.error('[Whisper] Error:', err);
+                showError('Transcription error: ' + err.message);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // DUAL-TRACK RECORDING
+        //
+        // Track A — Web Speech API  (Chrome/Edge only, needs internet)
+        // Track B — WAV via Whisper (always, 100% reliable locally)
+        //
+        // Both start on click. On stop, if Speech API produced a
+        // transcript → use it immediately. If not (no-speech, network
+        // error, etc.) → automatically send WAV to Whisper. The user
+        // just speaks and always gets a result.
+        // ═══════════════════════════════════════════════════════════
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let wavRecorder    = null;
+        let wavBlob        = null;
+        let recognition    = null;
+        let finalTranscript = '';
+        let baseContent    = '';
+        let _animFrame     = null;
+        const _audioBars   = Array.from(audioVisualizer.querySelectorAll('.audio-bar'));
+
+        function _startLevelMeter() {
+            function tick() {
+                if (!isRecording || !wavRecorder) return;
+                const level = wavRecorder.getLevel();
+                const heights = [0.4, 0.8, 1.0, 0.6, 0.3];
+                _audioBars.forEach((bar, i) => {
+                    const h = Math.max(8, Math.round(level * 100 * heights[i] + Math.random() * 8));
+                    bar.style.height = h + '%';
+                    bar.style.animation = 'none'; // override CSS with live data
+                });
+                _animFrame = requestAnimationFrame(tick);
+            }
+            _animFrame = requestAnimationFrame(tick);
+        }
+
+        function _stopLevelMeter() {
+            if (_animFrame) { cancelAnimationFrame(_animFrame); _animFrame = null; }
+            _audioBars.forEach(bar => { bar.style.height = ''; bar.style.animation = ''; });
+        }
+
+        recordBtn.addEventListener('click', () => isRecording ? stopVoice() : startVoice());
+
+        async function startVoice() {
+            errorMessage.style.display = 'none';
+            finalTranscript = '';
+            baseContent     = entryContent.value.trim();
+            wavBlob         = null;
+
+            // Track B: WAV recorder — always start first (needs mic permission)
+            wavRecorder = new WavRecorder();
+            try {
+                await wavRecorder.start();
+            } catch (err) {
+                showError('Microphone access denied. Please allow microphone permission in your browser and reload.');
+                return;
+            }
+
+            isRecording = true;
+            setRecordingUI(true);
+            _startLevelMeter(); // drive bars with real audio level
+
+            // Track A: Web Speech API on top (optional, best-effort)
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous     = true;
+                recognition.interimResults = true;
+                recognition.lang           = 'en-US';
+
+                recognition.onresult = (event) => {
+                    let interim = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const t = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) finalTranscript += t + ' ';
+                        else interim += t;
+                    }
+                    // Live preview in textarea
+                    const live = (finalTranscript + interim).trim();
+                    entryContent.value = baseContent ? baseContent + '\n\n' + live : live;
+                    charCount.textContent = entryContent.value.length;
+                };
+
+                // Don't show UI errors from Speech API — Whisper will handle it
+                recognition.onerror = ev => console.warn('[SpeechAPI] error:', ev.error);
+                recognition.onend   = ()  => console.log('[SpeechAPI] ended. finalTranscript len:', finalTranscript.length);
+
+                try { recognition.start(); console.log('[Voice] Both tracks started'); }
+                catch (e) { console.warn('[SpeechAPI] start() failed:', e.message); }
+            } else {
+                console.log('[Voice] No SpeechRecognition — WAV-only mode');
+            }
+        }
+
+        async function stopVoice() {
+            isRecording = false;
+            _stopLevelMeter(); // freeze visualiser bars
+
+            // Stop Speech API first so it flushes pending results
+            if (recognition) {
+                recognition.stop();
+                recognition = null;
+            }
+
+            // Stop WAV recorder — get the blob
+            wavBlob     = wavRecorder ? wavRecorder.stop() : null;
+            wavRecorder = null;
+
+            // Show processing state
+            setRecordingUI(false);
+            recordStatus.textContent = 'Processing…';
+            loadingTranscript.style.display = 'flex';
+            recordBtn.disabled = true;
+
+
+            // Wait 600 ms for any pending onresult events to fire
+            await new Promise(r => setTimeout(r, 600));
+
+            if (finalTranscript.trim()) {
+                // ✅ Track A succeeded — use Speech API result (instant)
+                console.log('[Voice] Using Speech API transcript');
+                entryContent.value = baseContent
+                    ? baseContent + '\n\n' + finalTranscript.trim()
+                    : finalTranscript.trim();
+                charCount.textContent = entryContent.value.length;
+                if (!entryTitle.value.trim()) {
+                    const d = new Date();
+                    entryTitle.value = `Voice Note - ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
+                }
+                errorMessage.style.display = 'none';
+                resetRecordUI();
+            } else {
+                // ❌ Track A gave nothing → fallback to Track B (Whisper WAV)
+                console.log('[Voice] Speech API empty — falling back to Whisper WAV');
+                // Reset any partial interim text
+                entryContent.value = baseContent;
+                charCount.textContent = entryContent.value.length;
+                recordStatus.textContent = 'Transcribing with Whisper…';
+                await sendToWhisper(wavBlob);
+                resetRecordUI();
+            }
+        }
+
+        // ── Form Submission ──────────────────────────────────────────
+        entryContent.addEventListener('input', () => { charCount.textContent = entryContent.value.length; });
+
+        createEntryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title   = entryTitle.value.trim();
+            const content = entryContent.value.trim();
+            if (!title || !content) { showError('Please fill in both title and content'); return; }
+
+            submitBtn.disabled = entryTitle.disabled = entryContent.disabled = true;
+            errorMessage.style.display = 'none';
+            loadingState.style.display = 'block';
+
+            try {
+                const entry = await createEntry(title, content);
+                const id    = entry?.id || null;
+                window.location.href = id ? `entry-details.html?id=${id}` : 'entries.html';
+            } catch {
+                loadingState.style.display = 'none';
+                submitBtn.disabled = entryTitle.disabled = entryContent.disabled = false;
+                showError('Failed to create entry. Please try again.');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -106,11 +106,20 @@ function requireAuth() {
 }
 
 async function checkIsAdmin() {
+    // IMPORTANT: use raw fetch(), NOT apiFetch().
+    // apiFetch() calls window.location.href = 'index.html' on 401/403,
+    // which races with the form-submit flow and redirects the user
+    // away from the analysis result card.
     try {
-        await apiFetch('/admin/all-user');
-        return true;
+        const token = getToken();
+        if (!token) return false;
+
+        const res = await fetch(`${API_BASE_URL}/admin/all-user`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return res.ok;   // true only for 2xx (i.e. real admin)
     } catch {
-        return false;
+        return false;    // network error — assume not admin
     }
 }
 

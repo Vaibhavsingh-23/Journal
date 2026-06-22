@@ -4,7 +4,7 @@ main.py
 Entry point for the Journal AI FastAPI micro-service.
 
 Start with:
-    uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    uvicorn main:app --host 0.0.0.0 --port 8001 --reload --reload-include "*.py"
 
 Environment variables are loaded from .env automatically via embedding_service.
 """

@@ -166,30 +166,34 @@
             errorMessage.style.display = 'none';
             loadingState.style.display = 'block';
 
-            try {
-                const createdEntry = await createEntry(title, content);
-                loadingState.style.display = 'none';
-                localStorage.removeItem('entryDraft');
-                createEntryForm.style.display = 'none';
-                analysisResult.style.display = 'block';
+            // ── Step 1: cancel any pending draft-save ─────────────────────────
+            clearTimeout(saveTimeout);
 
-                document.getElementById('resultMood').innerHTML =
-                    `<span class="mood-badge ${getMoodClass(createdEntry.mood)}">${getMoodEmoji(createdEntry.mood)} ${escapeHtml(createdEntry.mood || 'Unknown')}</span>`;
-                document.getElementById('resultEmotions').textContent = createdEntry.emotions || 'N/A';
-                document.getElementById('resultSentiment').textContent = (createdEntry.sentimentScore || 0).toFixed(2);
-                document.getElementById('resultSentimentBar').innerHTML =
-                    `<div class="sentiment-fill ${getSentimentColor(createdEntry.sentimentScore)}" style="width:${getSentimentPercent(createdEntry.sentimentScore || 0)}%"></div>`;
-                document.getElementById('resultSummary').textContent = createdEntry.aiSummary || 'No summary available';
-                document.getElementById('resultMotivation').textContent = createdEntry.motivationalThought || 'Keep journaling!';
-            } catch {
+            let createdEntry;
+            try {
+                createdEntry = await createEntry(title, content);
+            } catch (apiErr) {
                 loadingState.style.display = 'none';
                 submitBtn.disabled = false;
                 entryTitle.disabled = false;
                 entryContent.disabled = false;
                 errorMessage.textContent = 'Failed to create entry. Please try again.';
                 errorMessage.style.display = 'block';
+                console.error('createEntry API error:', apiErr);
+                return;
+            }
+
+            // ── Step 2: success — delete draft, go to the entry detail page ───
+            localStorage.removeItem('entryDraft');
+            const entryId = createdEntry?.id || (createdEntry?.id?.timestamp ? String(createdEntry.id) : null);
+            if (entryId) {
+                window.location.href = `entry-details.html?id=${entryId}`;
+            } else {
+                // Fallback: no id in response, go to entries list
+                window.location.href = 'entries.html';
             }
         });
+
     </script>
 </body>
 

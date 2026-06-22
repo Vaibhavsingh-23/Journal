@@ -25,17 +25,20 @@ public class JournalEntryService {
     private final GeminiService geminiService;
     private final UserProgressCommandService userProgressService;
     private final JournalEntryMapper mapper;
+    private final AiEmbeddingService aiEmbeddingService;
 
     public JournalEntryService(JournalEntryRepository journalEntryRepository,
                                 UserService userService,
                                 GeminiService geminiService,
                                 UserProgressCommandService userProgressService,
-                                JournalEntryMapper mapper) {
+                                JournalEntryMapper mapper,
+                                AiEmbeddingService aiEmbeddingService) {
         this.journalEntryRepository = journalEntryRepository;
         this.userService = userService;
         this.geminiService = geminiService;
         this.userProgressService = userProgressService;
         this.mapper = mapper;
+        this.aiEmbeddingService = aiEmbeddingService;
     }
 
     /**
@@ -80,6 +83,14 @@ public class JournalEntryService {
         // Update streaks and progress
         userProgressService.updateProgressOnNewEntry(user.getId());
 
+        // ── Embed into ChromaDB for RAG (best-effort — never blocks save) ────────
+        aiEmbeddingService.embedEntry(
+                saved.getId().toHexString(),
+                saved.getContent(),
+                saved.getUserId().toHexString(),
+                saved.getDate()
+        );
+
         log.info("Journal entry saved with ID: {}", saved.getId());
         return saved;
     }
@@ -112,7 +123,19 @@ public class JournalEntryService {
             }
         }
 
-        return journalEntryRepository.save(entry);
+        JournalEntry updated = journalEntryRepository.save(entry);
+
+        // ── Re-embed into ChromaDB if content changed (best-effort) ──────────────
+        if (contentChanged) {
+            aiEmbeddingService.embedEntry(
+                    updated.getId().toHexString(),
+                    updated.getContent(),
+                    updated.getUserId().toHexString(),
+                    updated.getDate()
+            );
+        }
+
+        return updated;
     }
 
     /**

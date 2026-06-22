@@ -10,11 +10,12 @@ Endpoints:
     POST /ai/query         — RAG: answer a question from journal context
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, File, UploadFile, Query
 from pydantic import BaseModel, Field
 
 from services.embedding_service import embed_single_entry, embed_all_entries
 from services.rag_service import ask_journal
+from services.voice_service import transcribe_audio, save_temp_audio, cleanup_temp_file
 
 router = APIRouter(prefix="/ai", tags=["AI Journal"])
 
@@ -128,3 +129,60 @@ def query(req: QueryRequest):
         raise HTTPException(status_code=500, detail=result["error"])
 
     return result
+
+
+@router.post("/voice/transcribe")
+async def transcribe_voice(
+    audio: UploadFile = File(...),
+    user_id: str = Query(...)
+):
+    """
+    Receive audio file from frontend,
+    transcribe using local Whisper model,
+    return transcript + detected language
+    
+    Called by: voice-journal.html frontend
+    """
+    temp_path = None
+    try:
+        # Read uploaded audio bytes
+        contents = await audio.read()
+        
+        # Get file extension (webm, mp4, wav etc)
+        extension = audio.filename.split(".")[-1] if "." in audio.filename else "webm"
+        
+        # Save to temp file
+        temp_path = save_temp_audio(contents, extension)
+        
+        # Transcribe using Whisper
+        result = transcribe_audio(temp_path)
+        
+        # Check if transcription failed
+        if result["status"] == "error":
+            raise HTTPException(
+                status_code=500,
+                detail=f"Transcription failed: {result['message']}"
+            )
+        
+        # Return transcript
+        return {
+            "transcript": result["transcript"],
+            "language": result["language"],
+            "user_id": user_id,
+            "status": "success"
+        }
+    
+    except HTTPException:
+        raise
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Voice processing failed: {str(e)}"
+        )
+    
+    finally:
+        # Always cleanup temp file
+        if temp_path:
+            cleanup_temp_file(temp_path)
+

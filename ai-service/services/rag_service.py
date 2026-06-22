@@ -21,6 +21,7 @@ Run from the project root:
 
 import os
 import logging
+from datetime import datetime
 
 import google.genai as genai
 from google.genai import types as genai_types
@@ -98,7 +99,6 @@ def _generate_with_fallback(prompt: str) -> str:
                 contents=prompt,
                 config=genai_types.GenerateContentConfig(
                     temperature=0.7,
-                    max_output_tokens=1024,
                 ),
             )
             return response.text or ""
@@ -206,13 +206,25 @@ def ask_journal(question: str, user_id: str) -> dict:
 
         # ── Step 4: Build context string ──────────────────────────────────────
         context_parts: list[str] = []
-        sources: list[str] = []
+        raw_sources: list[datetime] = []
 
         for doc, meta in zip(retrieved_docs, retrieved_meta):
-            date = meta.get("date", "unknown date")
-            context_parts.append(f"Entry from {date}:\n{doc}")
-            if date and date != "unknown date":
-                sources.append(date)
+            raw_date = meta.get("date", "")
+            
+            formatted_date = "unknown date"
+            if raw_date:
+                try:
+                    dt = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
+                    formatted_date = dt.strftime("%B %d, %Y")
+                    raw_sources.append(dt)
+                except ValueError:
+                    formatted_date = raw_date
+            
+            context_parts.append(f"Entry from {formatted_date}:\n{doc}")
+
+        # Deduplicate by turning into a set, sort descending, then format
+        unique_dates = sorted(list(set(raw_sources)), reverse=True)
+        sources = [dt.strftime("%B %d, %Y") for dt in unique_dates]
 
         context = "\n\n---\n\n".join(context_parts)
 
@@ -220,7 +232,10 @@ def ask_journal(question: str, user_id: str) -> dict:
         prompt = (
             "You are a personal journal assistant. "
             "Based ONLY on these journal entries, answer the question. "
-            "Always mention which time periods your answer is based on.\n\n"
+            "Write in a warm, personal, and empathetic tone. "
+            "Speak directly to the user as 'you'. "
+            "Write in flowing paragraphs. Do NOT use markdown asterisks or bullet points. "
+            "Keep your answer concise (maximum 3-4 sentences).\n\n"
             f"Journal Entries:\n{context}\n\n"
             f"Question: {question}\n\n"
             "Answer:"

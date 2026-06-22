@@ -3,12 +3,14 @@
  */
 
 const NAV_ITEMS = [
-    { id: 'dashboard', label: 'Dashboard', icon: '🏠', href: 'dashboard.html' },
-    { id: 'entries', label: 'Entries', icon: '📝', href: 'entries.html' },
-    { id: 'new-entry', label: 'New Entry', icon: '➕', href: 'create-entry.html' },
-    { id: 'analytics', label: 'Analytics', icon: '📈', href: 'dashboard.html#analytics' },
-    { id: 'settings', label: 'Settings', icon: '⚙️', href: 'settings.html' },
-    { id: 'admin', label: 'Admin', icon: '👑', href: 'admin.html', adminOnly: true }
+    { id: 'dashboard',    label: 'Dashboard',  icon: '🏠', href: 'dashboard.html' },
+    { id: 'entries',      label: 'Entries',     icon: '📝', href: 'entries.html' },
+    { id: 'new-entry',    label: 'New Entry',   icon: '➕', href: 'create-entry.html' },
+    { id: 'voice-journal',label: 'Voice Note',  icon: '🎙️', href: 'voice-journal.html' },
+    { id: 'journal-chat', label: 'Ask AI',      icon: '🤖', href: 'journal-chat.html' },
+    { id: 'analytics',    label: 'Analytics',   icon: '📈', href: 'dashboard.html#analytics' },
+    { id: 'settings',     label: 'Settings',    icon: '⚙️', href: 'settings.html' },
+    { id: 'admin',        label: 'Admin',       icon: '👑', href: 'admin.html', adminOnly: true }
 ];
 
 function initAppLayout(activePage) {
