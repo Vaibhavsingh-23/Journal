@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 
 # Gemini embedding model
 embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/text-embedding-004",
+    model="models/embedding-001",
     google_api_key=os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
 )
 
