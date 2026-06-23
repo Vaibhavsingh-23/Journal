@@ -11,6 +11,8 @@ services:
     envVars:
       - key: SERVER_PORT
         value: 10000
+      - key: AI_SERVICE_URL
+        value: https://journal-ai-service.onrender.com   # ← set to your actual Python service URL
     healthCheckPath: /journal/actuator/health
 
   - type: web
