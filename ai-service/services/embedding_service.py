@@ -35,9 +35,12 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 # Gemini embedding model
+GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/embedding-001",
-    google_api_key=os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
+    model="models/gemini-embedding-001",
+    google_api_key=GOOGLE_API_KEY,
+    task_type="retrieval_document",
+    output_dimensionality=1024,
 )
 
 # Pinecone client
