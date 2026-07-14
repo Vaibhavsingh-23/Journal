@@ -16,16 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 
-/**
- * Spring Security configuration.
- *
- * Auth model: Stateless JWT (no sessions, no Basic Auth).
- * Token is passed as: Authorization: Bearer <token>
- *
- * Public routes: /public/** (login, register)
- * Admin routes:  /admin/**, /api/admin/** — requires ADMIN role
- * All others:    require a valid JWT
- */
+
 @Configuration
 @EnableWebSecurity
 public class SpringSecurity {

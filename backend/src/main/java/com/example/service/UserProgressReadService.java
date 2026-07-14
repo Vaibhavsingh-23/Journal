@@ -25,11 +25,18 @@ public class UserProgressReadService {
                 });
 
         // Dynamic streak calculation based on time passed
-        if (progress.getLastEntryDate() != null) {
-            java.time.LocalDate today = java.time.LocalDate.now();
-            if (progress.getLastEntryDate().isBefore(today.minusDays(1))) {
+        java.time.ZoneId userZone = java.time.ZoneId.of("Asia/Kolkata");
+        java.time.LocalDate today = java.time.LocalDate.now(userZone);
+        java.time.LocalDate lastEntry = progress.getLastEntryDate();
+
+        if (lastEntry != null) {
+            // If last entry was before yesterday, streak is broken
+            if (lastEntry.isBefore(today.minusDays(1))) {
                 progress.setCurrentStreak(0);
+                progress.setLongestStreak(progress.getLongestStreak()); // keep longest
             }
+            // If last entry was yesterday or today, streak is valid as saved
+            // Do nothing — use the value saved by updateProgressOnNewEntry
         }
 
         return progress;

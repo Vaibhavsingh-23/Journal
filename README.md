@@ -15,6 +15,24 @@ A full-stack journaling application with **Google Gemini AI** integration for in
 -  **Admin Dashboard** - User management and system overview
 -  **Dark Mode** - Beautiful dark theme support
 
+# Current Status
+
+Implemented
+* Capture Pipeline
+* Knowledge Extraction
+* Knowledge Persistence
+* Entity Resolution
+* Memory Foundation
+* Memory Persistence
+* Memory Formation Engine
+
+Roadmap
+* Memory Evolution
+* Memory Retrieval
+* Insight Engine
+* Recommendation Engine
+* Identity Engine
+
 ---
 
 ## 📸 Screenshots

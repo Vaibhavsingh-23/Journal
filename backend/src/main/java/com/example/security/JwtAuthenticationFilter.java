@@ -16,12 +16,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * Intercepts every request and validates the Bearer JWT token from the
- * Authorization header. Sets the SecurityContext if the token is valid.
- *
- * Does NOT apply to /public/** — those are permitted without authentication.
- */
+
+// Intercepts every request and validates the Bearer JWT token from the
+// Authorization header. Sets the SecurityContext if the token is valid.
+
 @Component
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -65,10 +63,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * Extracts the Bearer token from the Authorization header.
-     * Returns null if header is missing or malformed.
-     */
+    
+//Extracts the Bearer token from the Authorization header.
+//Returns null if header is missing or malformed.
+     
     private String extractTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
