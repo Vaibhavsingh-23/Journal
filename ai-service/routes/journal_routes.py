@@ -10,11 +10,13 @@ Endpoints:
     POST /ai/query         — RAG: answer a question from journal context
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks
 from pydantic import BaseModel, Field
 
 from services.embedding_service import embed_single_entry, embed_all_entries
-from services.rag_service import ask_journal
+from dependencies import get_retrieval_gateway, get_cognitive_orchestrator
+from memory.retrieval.retrieval_gateway import RetrievalGateway
+from orchestration.cognitive_orchestrator import CognitiveOrchestrator
 
 router = APIRouter(prefix="/ai", tags=["AI Journal"])
 
@@ -58,12 +60,17 @@ def health():
 
 
 @router.post("/embed/entry")
-def embed_entry(req: EmbedEntryRequest):
+def embed_entry(
+    req: EmbedEntryRequest, 
+    background_tasks: BackgroundTasks,
+    orchestrator: CognitiveOrchestrator = Depends(get_cognitive_orchestrator)
+):
     """
     Embed a single journal entry and store it in ChromaDB.
 
     Called by the Spring backend each time a new entry is created or updated.
     Safe to call multiple times for the same entry_id — uses upsert internally.
+    Triggers the Cognitive Pipeline asynchronously.
     """
     if not req.entry_id or not req.text or not req.user_id:
         raise HTTPException(
@@ -80,6 +87,15 @@ def embed_entry(req: EmbedEntryRequest):
 
     if result.get("status") == "error":
         raise HTTPException(status_code=500, detail=result.get("detail", "Embedding failed"))
+
+    # Trigger asynchronous cognitive processing
+    background_tasks.add_task(
+        orchestrator.run_pipeline,
+        entry_id=req.entry_id,
+        text=req.text,
+        user_id=req.user_id,
+        date=req.date
+    )
 
     return result
 
@@ -104,21 +120,21 @@ def embed_all(req: EmbedAllRequest):
 
 
 @router.post("/query")
-def query(req: QueryRequest):
+def query(req: QueryRequest, gateway: RetrievalGateway = Depends(get_retrieval_gateway)):
     """
     Answer a natural-language question using the user's journal entries as context.
 
-    RAG pipeline:
-        1. Converts question -> embedding vector
-        2. Semantic search in ChromaDB (filtered by user_id)
-        3. Passes top-5 results to Gemini (gemini-1.5-flash) for a grounded answer
+    Retrieval Pipeline:
+        1. Invokes the RetrievalGateway.
+        2. Tries to pull semantic structure from Memory Retrieval Engine.
+        3. Falls back to Pinecone Document RAG if no memory is found.
 
-    Returns the answer text and the ISO dates of entries used as sources.
+    Returns the answer text, sources, and the engine used.
     """
     if not req.user_id or not req.question:
         raise HTTPException(status_code=400, detail="user_id and question are required")
 
-    result = ask_journal(
+    result = gateway.answer_question(
         question=req.question,
         user_id=req.user_id,
     )

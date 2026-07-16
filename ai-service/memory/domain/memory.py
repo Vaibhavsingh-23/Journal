@@ -39,6 +39,7 @@ class Memory(BaseModel):
     user_id: str = Field(..., description="The user to whom this memory belongs.")
     memory_type: MemoryType = Field(..., description="The categorization of the memory.")
     status: MemoryStatus = Field(default=MemoryStatus.EMERGING, description="Current lifecycle status.")
+    pending_insight_generation: bool = Field(default=False, description="Dirty flag for async insight processing.")
     
     title: str = Field(default="", description="The evolving title of the memory story.")
     summary: str = Field(..., description="The evolving AI-generated summary of the combined fragments.")
