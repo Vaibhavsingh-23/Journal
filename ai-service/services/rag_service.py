@@ -22,6 +22,7 @@ Run from the project root:
 import os
 import logging
 from datetime import datetime
+from utils.datetime_utils import parse_datetime
 
 import google.genai as genai
 from google.genai import types as genai_types
@@ -215,11 +216,11 @@ def ask_journal(question: str, user_id: str) -> dict:
             formatted_date = "unknown date"
             if raw_date:
                 try:
-                    dt = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
+                    dt = parse_datetime(raw_date)
                     formatted_date = dt.strftime("%B %d, %Y")
                     raw_sources.append(dt)
                 except ValueError:
-                    formatted_date = raw_date
+                    formatted_date = str(raw_date)
             
             context_parts.append(f"Entry from {formatted_date}:\n{doc}")
 

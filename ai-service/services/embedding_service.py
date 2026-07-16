@@ -18,6 +18,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from pinecone import Pinecone
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from utils.datetime_utils import to_iso_utc
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
@@ -88,6 +89,7 @@ def embed_single_entry(
         vector: list[float] = embeddings.embed_query(text)
 
         # Upsert into Pinecone
+        iso_date = to_iso_utc(date) if date else ""
         index.upsert(
             vectors=[
                 {
@@ -95,7 +97,7 @@ def embed_single_entry(
                     "values": vector,
                     "metadata": {
                         "user_id": user_id,
-                        "date": date,
+                        "date": iso_date,
                         "text": text,
                     }
                 }
@@ -250,7 +252,5 @@ def _extract_date(entry: dict) -> str:
         val = entry.get(field)
         if val is None:
             continue
-        if hasattr(val, "isoformat"):
-            return val.isoformat()
-        return str(val)
+        return to_iso_utc(val)
     return ""
