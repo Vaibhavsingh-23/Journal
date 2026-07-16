@@ -78,8 +78,8 @@ async def lifespan(app: FastAPI):
     # Initialize Memory Formation Engine
     from memory.services.memory_formation_engine import MemoryFormationEngine
     memory_formation = MemoryFormationEngine(
-        memory_repo=memory_repo,
-        fragment_repo=fragment_repo
+        memory_repository=memory_repo,
+        fragment_repository=fragment_repo
     )
     
     # Initialize Insight Services
