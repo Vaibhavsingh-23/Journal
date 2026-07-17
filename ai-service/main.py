@@ -11,8 +11,10 @@ Environment variables are loaded from .env automatically via embedding_service.
 
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+import traceback
 
 from routes.journal_routes import router as journal_router
 
@@ -164,6 +166,18 @@ app.include_router(debug_router)
 # Root
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Global Error Handling
+# ---------------------------------------------------------------------------
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"Unhandled exception: {exc}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"message": "An internal server error occurred in the AI Engine."},
+    )
+
 @app.get("/")
 def root():
     """Service info."""
@@ -178,3 +192,8 @@ def root():
             "rag_query":  "POST /ai/query",
         },
     }
+
+@app.get("/ai/health")
+def health_check():
+    """Health check for deployment monitoring."""
+    return {"status": "ok", "service": "journal-ai"}

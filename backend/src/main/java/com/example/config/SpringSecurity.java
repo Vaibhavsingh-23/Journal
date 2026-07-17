@@ -49,7 +49,7 @@ public class SpringSecurity {
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
                         // Public: login, register, health check
-                        .requestMatchers("/public/**").permitAll()
+                        .requestMatchers("/public/**", "/api/health").permitAll()
                         // Swagger UI
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         // Actuator health (public)
