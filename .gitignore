@@ -23,6 +23,31 @@ __pycache__/
 *.pyo
 *.pyd
 
+# IDE
+.idea/
+*.iml
+
+# Logs
+logs/
+*.log
+
+# Credentials & secrets
+.env
+*.env
+
+# Java build output
+target/
+
+# Spring config (contains DB/API secrets)
+backend/src/main/resources/application.yml
+backend/src/test/resources/application*.yml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 # ChromaDB vector store (runtime data, not source)
 ai-service/chroma_store/
 
@@ -31,8 +56,6 @@ backend-docs/
 
 # Node
 node_modules/
-package.json
-package-lock.json
 
 # Python Virtual Env
 ai-service/venv/
