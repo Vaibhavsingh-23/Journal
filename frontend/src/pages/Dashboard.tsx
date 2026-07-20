@@ -2,12 +2,13 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
 import { JournalCard } from '@/components/common/JournalCard';
 import { InsightCard } from '@/components/common/InsightCard';
-import { mockJournalEntries, mockInsights, mockUserProgress, mockWeeklySummary } from '@/data/mock';
-import { Flame, BookOpen, Brain, Lightbulb, ArrowRight } from 'lucide-react';
+import { Flame, BookOpen, Brain, Lightbulb, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { format } from 'date-fns';
+import { useQuery } from '@tanstack/react-query';
+import { fetchUserProgress, fetchWeeklySummary, fetchJournalEntries, fetchInsights } from '@/lib/api';
 
 const container = {
   hidden: { opacity: 0 },
@@ -22,10 +23,29 @@ const item = {
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const progress = mockUserProgress;
-  const summary = mockWeeklySummary;
-  const recentEntries = mockJournalEntries.slice(0, 4);
-  const recentInsights = mockInsights.slice(0, 3);
+
+  const { data: progress, isLoading: isLoadingProgress } = useQuery({
+    queryKey: ['progress'],
+    queryFn: fetchUserProgress,
+  });
+
+  const { data: summary, isLoading: isLoadingSummary } = useQuery({
+    queryKey: ['summary'],
+    queryFn: fetchWeeklySummary,
+  });
+
+  const { data: entries, isLoading: isLoadingEntries } = useQuery({
+    queryKey: ['journal-entries'],
+    queryFn: fetchJournalEntries,
+  });
+
+  const { data: insights, isLoading: isLoadingInsights } = useQuery({
+    queryKey: ['insights'],
+    queryFn: fetchInsights,
+  });
+
+  const recentEntries = entries?.slice(0, 4) || [];
+  const recentInsights = insights?.slice(0, 3) || [];
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -48,14 +68,36 @@ export default function Dashboard() {
 
       {/* Stats */}
       <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={Flame} label="Current Streak" value={`${progress.currentStreak} days`} subtitle={`Best: ${progress.longestStreak} days`} />
-        <StatCard icon={BookOpen} label="Total Entries" value={progress.totalEntries} subtitle={`${progress.weeklyEntryCount} this week`} />
-        <StatCard icon={Brain} label="Active Memories" value={6} subtitle="2 emerging" />
-        <StatCard icon={Lightbulb} label="Insights Found" value={mockInsights.length} subtitle="3 high confidence" />
+        <StatCard 
+          icon={Flame} 
+          label="Current Streak" 
+          value={isLoadingProgress ? <Loader2 className="w-4 h-4 animate-spin" /> : `${progress?.currentStreak || 0} days`} 
+          subtitle={`Best: ${progress?.longestStreak || 0} days`} 
+        />
+        <StatCard 
+          icon={BookOpen} 
+          label="Total Entries" 
+          value={isLoadingProgress ? <Loader2 className="w-4 h-4 animate-spin" /> : progress?.totalEntries || 0} 
+          subtitle={`${progress?.weeklyEntryCount || 0} this week`} 
+        />
+        <StatCard 
+          icon={Brain} 
+          label="Active Memories" 
+          value={6} // Keep mocked as count isn't in progress API
+          subtitle="2 emerging" 
+        />
+        <StatCard 
+          icon={Lightbulb} 
+          label="Insights Found" 
+          value={isLoadingInsights ? <Loader2 className="w-4 h-4 animate-spin" /> : insights?.length || 0} 
+          subtitle="3 high confidence" 
+        />
       </motion.div>
 
       {/* Weekly Summary */}
-      {summary && (
+      {isLoadingSummary ? (
+        <div className="h-40 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] animate-pulse mb-8" />
+      ) : summary ? (
         <motion.div
           variants={item}
           className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 mb-8"
@@ -87,7 +129,7 @@ export default function Dashboard() {
             </div>
           )}
         </motion.div>
-      )}
+      ) : null}
 
       {/* Recent Entries */}
       <motion.div variants={item} className="mb-8">
@@ -102,11 +144,20 @@ export default function Dashboard() {
             View all <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {recentEntries.map((entry) => (
-            <JournalCard key={entry.id} entry={entry} onClick={() => navigate('/journal')} />
-          ))}
-        </div>
+        {isLoadingEntries ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-32 bg-[hsl(var(--card))] animate-pulse rounded-xl" />
+            <div className="h-32 bg-[hsl(var(--card))] animate-pulse rounded-xl" />
+          </div>
+        ) : recentEntries.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {recentEntries.map((entry) => (
+              <JournalCard key={entry.id} entry={entry} onClick={() => navigate('/journal')} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">No entries yet.</p>
+        )}
       </motion.div>
 
       {/* Recent Insights */}
@@ -122,11 +173,21 @@ export default function Dashboard() {
             View all <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {recentInsights.map((insight) => (
-            <InsightCard key={insight.id} insight={insight} />
-          ))}
-        </div>
+        {isLoadingInsights ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="h-32 bg-[hsl(var(--card))] animate-pulse rounded-xl" />
+            <div className="h-32 bg-[hsl(var(--card))] animate-pulse rounded-xl" />
+            <div className="h-32 bg-[hsl(var(--card))] animate-pulse rounded-xl" />
+          </div>
+        ) : recentInsights.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {recentInsights.map((insight) => (
+              <InsightCard key={insight.id} insight={insight} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">No insights discovered yet.</p>
+        )}
       </motion.div>
     </motion.div>
   );

@@ -1,23 +1,31 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { JournalCard } from '@/components/common/JournalCard';
 import { MoodBadge } from '@/components/common/MoodBadge';
-import { mockJournalEntries } from '@/data/mock';
-import { Plus, Search, X } from 'lucide-react';
+import { Plus, Search, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
-import type { JournalEntry, Mood } from '@/types/models';
+import type { JournalEntry } from '@/types/models';
+import { useQuery } from '@tanstack/react-query';
+import { fetchJournalEntries } from '@/lib/api';
 
 export default function Journal() {
   const [search, setSearch] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [showEditor, setShowEditor] = useState(false);
 
-  const filtered = mockJournalEntries.filter(
-    (e) =>
-      e.title.toLowerCase().includes(search.toLowerCase()) ||
-      e.content.toLowerCase().includes(search.toLowerCase())
-  );
+  const { data: entries = [], isLoading } = useQuery({
+    queryKey: ['journal-entries'],
+    queryFn: fetchJournalEntries,
+  });
+
+  const filtered = useMemo(() => {
+    return entries.filter(
+      (e) =>
+        e.title?.toLowerCase().includes(search.toLowerCase()) ||
+        e.content?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [entries, search]);
 
   return (
     <div>
@@ -46,19 +54,27 @@ export default function Journal() {
       <div className="flex gap-6">
         {/* Entry List */}
         <div className="flex-1 space-y-3">
-          <AnimatePresence>
-            {filtered.map((entry) => (
-              <JournalCard
-                key={entry.id}
-                entry={entry}
-                onClick={() => setSelectedEntry(entry)}
-              />
-            ))}
-          </AnimatePresence>
-          {filtered.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-[hsl(var(--muted-foreground))]">No entries found</p>
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--muted-foreground))]" />
             </div>
+          ) : (
+            <>
+              <AnimatePresence>
+                {filtered.map((entry) => (
+                  <JournalCard
+                    key={entry.id}
+                    entry={entry}
+                    onClick={() => setSelectedEntry(entry)}
+                  />
+                ))}
+              </AnimatePresence>
+              {filtered.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-[hsl(var(--muted-foreground))]">No entries found</p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -78,7 +94,7 @@ export default function Journal() {
                       {selectedEntry.title}
                     </h2>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-                      {format(parseISO(selectedEntry.date), 'EEEE, MMMM d, yyyy · h:mm a')}
+                      {selectedEntry.date ? format(parseISO(selectedEntry.date), 'EEEE, MMMM d, yyyy · h:mm a') : 'Unknown Date'}
                     </p>
                   </div>
                   <button
@@ -91,7 +107,7 @@ export default function Journal() {
 
                 {selectedEntry.mood && (
                   <div className="flex items-center gap-2 mb-4">
-                    <MoodBadge mood={selectedEntry.mood} size="md" />
+                    <MoodBadge mood={selectedEntry.mood as any} size="md" />
                     {selectedEntry.emotions && (
                       <span className="text-xs text-[hsl(var(--muted-foreground))]">
                         {selectedEntry.emotions.split(',').join(' · ')}
@@ -100,7 +116,7 @@ export default function Journal() {
                   </div>
                 )}
 
-                <div className="journal-text text-sm text-[hsl(var(--foreground))] leading-relaxed mb-6">
+                <div className="journal-text text-sm text-[hsl(var(--foreground))] leading-relaxed mb-6 whitespace-pre-wrap">
                   {selectedEntry.content}
                 </div>
 

@@ -10,8 +10,10 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  LogOut,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -105,8 +107,22 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Collapse Toggle */}
-      <div className="p-3 border-t border-[hsl(var(--sidebar-border))]">
+      {/* Footer / Logout / Collapse Toggle */}
+      <div className="p-3 border-t border-[hsl(var(--sidebar-border))] space-y-2">
+        <button
+          onClick={() => useAuthStore.getState().logout()}
+          className={cn(
+            'flex items-center gap-3 w-full py-2.5 px-3 rounded-lg transition-colors',
+            'text-[hsl(var(--muted-foreground))] hover:text-red-500',
+            'hover:bg-red-500/10'
+          )}
+        >
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {!collapsed && (
+            <span className="text-sm font-medium whitespace-nowrap">Logout</span>
+          )}
+        </button>
+
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={cn(

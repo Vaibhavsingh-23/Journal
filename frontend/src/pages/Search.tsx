@@ -1,24 +1,25 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/PageHeader';
-import { mockSearchResults } from '@/data/mock';
 import { Search as SearchIcon, Loader2, BookOpen, Brain } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { SearchResult } from '@/types/models';
+import { useMutation } from '@tanstack/react-query';
+import { searchJournal } from '@/lib/api';
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = async () => {
+  const searchMutation = useMutation({
+    mutationFn: (q: string) => searchJournal(q),
+    onSuccess: () => {
+      setHasSearched(true);
+    },
+  });
+
+  const handleSearch = () => {
     if (!query.trim()) return;
-    setIsSearching(true);
     setHasSearched(true);
-    // Simulate search delay
-    await new Promise((r) => setTimeout(r, 800));
-    setResults(mockSearchResults);
-    setIsSearching(false);
+    searchMutation.mutate(query);
   };
 
   const suggestions = [
@@ -27,6 +28,9 @@ export default function SearchPage() {
     'What have I learned about myself this week?',
     'Who have I been spending time with?',
   ];
+
+  const results = searchMutation.data || [];
+  const isSearching = searchMutation.isPending;
 
   return (
     <div>
@@ -72,7 +76,7 @@ export default function SearchPage() {
                   key={s}
                   onClick={() => {
                     setQuery(s);
-                    setTimeout(handleSearch, 100);
+                    searchMutation.mutate(s);
                   }}
                   className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))]/30 transition-colors"
                 >
@@ -146,7 +150,7 @@ export default function SearchPage() {
           </motion.div>
         )}
 
-        {!isSearching && hasSearched && results.length === 0 && (
+        {!isSearching && hasSearched && results.length === 0 && searchMutation.isSuccess && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

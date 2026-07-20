@@ -1,10 +1,11 @@
 import { useRef, useCallback, useState } from 'react';
 import { PageHeader } from '@/components/common/PageHeader';
-import { mockGraphData, mockMemories } from '@/data/mock';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import type { Memory } from '@/types/models';
 import ForceGraph2D from 'react-force-graph-2d';
+import { useQuery } from '@tanstack/react-query';
+import { fetchMemories, fetchGraphData } from '@/lib/api';
 
 const typeColors: Record<string, string> = {
   memory: '#c4956a',
@@ -16,14 +17,24 @@ export default function MemoryExplorer() {
   const graphRef = useRef<any>(null);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
 
+  const { data: memories = [], isLoading: isMemoriesLoading } = useQuery({
+    queryKey: ['memories'],
+    queryFn: fetchMemories,
+  });
+
+  const { data: graphData = { nodes: [], links: [] }, isLoading: isGraphLoading } = useQuery({
+    queryKey: ['graph-data'],
+    queryFn: fetchGraphData,
+  });
+
   const handleNodeClick = useCallback((node: any) => {
-    const mem = mockMemories.find((m) => m.id === node.id);
+    const mem = memories.find((m) => m.id === node.id);
     if (mem) setSelectedMemory(mem);
     if (graphRef.current) {
       graphRef.current.centerAt(node.x, node.y, 500);
       graphRef.current.zoom(2, 500);
     }
-  }, []);
+  }, [memories]);
 
   const paintNode = useCallback((node: any, ctx: CanvasRenderingContext2D) => {
     const size = (node.val || 4) * 1.5;
@@ -46,7 +57,7 @@ export default function MemoryExplorer() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = '#e0d5c5';
-    ctx.fillText(node.label, node.x, node.y + size + 3);
+    ctx.fillText(node.label || '', node.x, node.y + size + 3);
   }, []);
 
   return (
@@ -59,25 +70,35 @@ export default function MemoryExplorer() {
       <div className="flex gap-6">
         {/* Graph */}
         <div className="flex-1 rounded-xl border border-[hsl(var(--border))] bg-surface-0 overflow-hidden relative" style={{ height: 'calc(100vh - 220px)' }}>
-          <ForceGraph2D
-            ref={graphRef}
-            graphData={mockGraphData}
-            nodeCanvasObject={paintNode}
-            nodePointerAreaPaint={(node: any, color: string, ctx: CanvasRenderingContext2D) => {
-              const size = (node.val || 4) * 1.5;
-              ctx.beginPath();
-              ctx.arc(node.x, node.y, size + 4, 0, 2 * Math.PI);
-              ctx.fillStyle = color;
-              ctx.fill();
-            }}
-            onNodeClick={handleNodeClick}
-            linkColor={() => 'rgba(196, 149, 106, 0.15)'}
-            linkWidth={1}
-            backgroundColor="transparent"
-            cooldownTicks={80}
-            d3AlphaDecay={0.02}
-            d3VelocityDecay={0.3}
-          />
+          {isGraphLoading || isMemoriesLoading ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--muted-foreground))]" />
+            </div>
+          ) : graphData.nodes.length > 0 ? (
+            <ForceGraph2D
+              ref={graphRef}
+              graphData={graphData}
+              nodeCanvasObject={paintNode}
+              nodePointerAreaPaint={(node: any, color: string, ctx: CanvasRenderingContext2D) => {
+                const size = (node.val || 4) * 1.5;
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, size + 4, 0, 2 * Math.PI);
+                ctx.fillStyle = color;
+                ctx.fill();
+              }}
+              onNodeClick={handleNodeClick}
+              linkColor={() => 'rgba(196, 149, 106, 0.15)'}
+              linkWidth={1}
+              backgroundColor="transparent"
+              cooldownTicks={80}
+              d3AlphaDecay={0.02}
+              d3VelocityDecay={0.3}
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <p className="text-[hsl(var(--muted-foreground))]">No memories or entities discovered yet.</p>
+            </div>
+          )}
 
           {/* Legend */}
           <div className="absolute bottom-4 left-4 flex items-center gap-4 text-xs text-[hsl(var(--muted-foreground))]">
@@ -120,7 +141,7 @@ export default function MemoryExplorer() {
 
                 <div className="space-y-2 mb-4">
                   <p className="text-xs font-medium text-[hsl(var(--foreground))] uppercase tracking-wider">Timeline</p>
-                  {selectedMemory.timeline.map((point, i) => (
+                  {selectedMemory.timeline?.map((point, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--primary))] mt-1.5 flex-shrink-0" />
                       <p className="text-sm text-[hsl(var(--muted-foreground))]">{point}</p>
@@ -137,7 +158,7 @@ export default function MemoryExplorer() {
                     {selectedMemory.status}
                   </span>
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                    · {selectedMemory.fragmentIds.length} fragments
+                    · {selectedMemory.fragmentIds?.length || 0} fragments
                   </span>
                 </div>
               </div>

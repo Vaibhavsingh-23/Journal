@@ -4,6 +4,7 @@ import { useEffect, Suspense, lazy } from 'react';
 import { useThemeStore } from '@/stores/themeStore';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
+import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Lazy-loaded routes for code splitting
@@ -55,15 +56,17 @@ export default function App() {
                 <Route path="/register" element={<Register />} />
               </Route>
 
-              {/* App routes */}
-              <Route element={<AppLayout />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/journal" element={<Journal />} />
-                <Route path="/memory" element={<MemoryExplorer />} />
-                <Route path="/insights" element={<Insights />} />
-                <Route path="/timeline" element={<Timeline />} />
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/settings" element={<Settings />} />
+              {/* App routes (Protected) */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/journal" element={<Journal />} />
+                  <Route path="/memory" element={<MemoryExplorer />} />
+                  <Route path="/insights" element={<Insights />} />
+                  <Route path="/timeline" element={<Timeline />} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Route>
               </Route>
 
               {/* Default redirect */}

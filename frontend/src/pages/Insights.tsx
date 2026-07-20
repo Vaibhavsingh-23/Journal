@@ -1,7 +1,8 @@
 import { PageHeader } from '@/components/common/PageHeader';
 import { InsightCard } from '@/components/common/InsightCard';
-import { mockInsights, mockSentimentData, mockMoodDistribution } from '@/data/mock';
+import { mockSentimentData, mockMoodDistribution } from '@/data/mock';
 import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -13,6 +14,8 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import { fetchInsights } from '@/lib/api';
 
 const container = {
   hidden: { opacity: 0 },
@@ -25,6 +28,11 @@ const item = {
 };
 
 export default function Insights() {
+  const { data: insights = [], isLoading } = useQuery({
+    queryKey: ['insights'],
+    queryFn: fetchInsights,
+  });
+
   return (
     <motion.div variants={container} initial="hidden" animate="show">
       <PageHeader
@@ -32,7 +40,7 @@ export default function Insights() {
         description="Patterns your Second Brain has discovered across your experiences."
       />
 
-      {/* Charts */}
+      {/* Charts (Currently using mock data as endpoints are not yet built) */}
       <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Sentiment Over Time */}
         <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5">
@@ -126,11 +134,21 @@ export default function Insights() {
         <h2 className="font-serif text-lg font-medium text-[hsl(var(--foreground))] mb-4">
           All Insights
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockInsights.map((insight) => (
-            <InsightCard key={insight.id} insight={insight} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="h-32 bg-[hsl(var(--card))] animate-pulse rounded-xl" />
+            <div className="h-32 bg-[hsl(var(--card))] animate-pulse rounded-xl" />
+            <div className="h-32 bg-[hsl(var(--card))] animate-pulse rounded-xl" />
+          </div>
+        ) : insights.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {insights.map((insight) => (
+              <InsightCard key={insight.id} insight={insight} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-[hsl(var(--muted-foreground))]">No insights found yet.</p>
+        )}
       </motion.div>
     </motion.div>
   );
