@@ -144,8 +144,11 @@ app.add_middleware(
         "http://localhost:5500",        # VS Code Live Server
         "http://127.0.0.1:5500",
         "http://localhost:8000",
+        "http://localhost:5173",        # Vite default
+        "http://127.0.0.1:5173",
         "https://journal-frontend-v45t.onrender.com",   # deployed frontend
-        "https://journal-backend.onrender.com",         # deployed Spring backend
+        "https://second-brain-rmxh.onrender.com",       # new deployed frontend
+        "https://journal-backend-v14j.onrender.com",    # deployed Spring backend
     ],
     allow_credentials=True,
     allow_methods=["*"],
