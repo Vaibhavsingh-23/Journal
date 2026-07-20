@@ -1,21 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, Suspense, lazy } from 'react';
 import { useThemeStore } from '@/stores/themeStore';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-import { Suspense, lazy } from 'react';
-import Dashboard from '@/pages/Dashboard';
-import Journal from '@/pages/Journal';
-import Timeline from '@/pages/Timeline';
-import SearchPage from '@/pages/Search';
-import Settings from '@/pages/Settings';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-
-// Lazy-loaded routes (heavy dependencies like recharts, react-force-graph-2d)
+// Lazy-loaded routes for code splitting
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Journal = lazy(() => import('@/pages/Journal'));
+const Timeline = lazy(() => import('@/pages/Timeline'));
+const SearchPage = lazy(() => import('@/pages/Search'));
+const Settings = lazy(() => import('@/pages/Settings'));
+const Login = lazy(() => import('@/pages/Login'));
+const Register = lazy(() => import('@/pages/Register'));
 const MemoryExplorer = lazy(() => import('@/pages/Memory'));
 const Insights = lazy(() => import('@/pages/Insights'));
 
