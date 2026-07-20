@@ -15,7 +15,6 @@ import type {
   GraphData,
   SearchResult,
 } from '../types/models';
-import { mockGraphData } from '../data/mock';
 
 // ── Axios Instances ──────────────────────────────────────────────────────────
 
@@ -141,8 +140,12 @@ export async function fetchUserProgress(): Promise<UserProgress> {
 }
 
 export async function fetchGraphData(): Promise<GraphData> {
-  // Graph data requires complex generation, mock for now
-  return mockGraphData;
+  const state = getAuthState();
+  const userId = state?.user?.id;
+  if (!userId) return { nodes: [], links: [] };
+  
+  const res = await aiApi.get(`/debug/graph?user_id=${userId}`);
+  return res.data || { nodes: [], links: [] };
 }
 
 export async function searchJournal(question: string): Promise<SearchResult[]> {
