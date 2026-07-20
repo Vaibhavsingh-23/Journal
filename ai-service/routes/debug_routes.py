@@ -10,7 +10,8 @@ from typing import Dict, Any
 from capture.repositories.knowledge_repository import MongoKnowledgeRepository
 from memory.repositories.memory_repository import MongoMemoryRepository
 from insight.repositories.insight_repository import MongoInsightRepository
-from dependencies import get_knowledge_repo, get_memory_repo, get_insight_repo
+from capture.repositories.entity_repository import MongoEntityRepository
+from dependencies import get_knowledge_repo, get_memory_repo, get_insight_repo, get_entity_repo
 
 router = APIRouter(prefix="/ai/debug", tags=["AI Debug"])
 
@@ -83,3 +84,55 @@ def get_health(
         "pending_dirty_memories": len(dirty),
         "pending_validations": len(dirty)
     }
+
+@router.get("/graph")
+def get_graph(
+    user_id: str,
+    memory_repo: MongoMemoryRepository = Depends(get_memory_repo),
+    entity_repo: MongoEntityRepository = Depends(get_entity_repo),
+    insight_repo: MongoInsightRepository = Depends(get_insight_repo)
+):
+    """Generate ForceGraph2D compatible graph data from actual memories and entities."""
+    memories = memory_repo.find_by_user(user_id)
+    # Get all entities for this user
+    entities_cursor = entity_repo.collection.find({"user_id": user_id})
+    entities = {str(e["id"]): e for e in entities_cursor}
+    
+    insights = insight_repo.find_active_by_user(user_id)
+    
+    nodes = []
+    links = []
+    
+    for m in memories:
+        nodes.append({
+            "id": m.id,
+            "label": m.title or "Memory",
+            "type": "memory",
+            "group": "memory",
+            "val": 6
+        })
+        for e_id in getattr(m, 'entityIds', getattr(m, 'entity_ids', [])):
+            if str(e_id) in entities:
+                links.append({"source": m.id, "target": str(e_id)})
+                
+    for e_id, e in entities.items():
+        nodes.append({
+            "id": e_id,
+            "label": e.get("name", "Entity"),
+            "type": "entity",
+            "group": "entity",
+            "val": 4
+        })
+        
+    for i in insights:
+        nodes.append({
+            "id": i.id,
+            "label": getattr(i, 'title', getattr(i, 'type', 'Insight')),
+            "type": "insight",
+            "group": "insight",
+            "val": 5
+        })
+        for m_id in getattr(i, 'supportingMemoryIds', getattr(i, 'supporting_memory_ids', [])):
+            links.append({"source": i.id, "target": str(m_id)})
+            
+    return {"nodes": nodes, "links": links}

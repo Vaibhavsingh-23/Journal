@@ -111,6 +111,7 @@ async def lifespan(app: FastAPI):
     app.state.knowledge_repo = knowledge_repo
     app.state.memory_repo = memory_repo
     app.state.insight_repo = insight_repo
+    app.state.entity_repo = entity_repo
     
     yield
     

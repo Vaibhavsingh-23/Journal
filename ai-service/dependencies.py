@@ -29,3 +29,6 @@ def get_memory_repo(request: Request):
 
 def get_insight_repo(request: Request):
     return getattr(request.app.state, "insight_repo", None)
+
+def get_entity_repo(request: Request):
+    return getattr(request.app.state, "entity_repo", None)
