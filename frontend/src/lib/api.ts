@@ -148,6 +148,47 @@ export async function fetchGraphData(): Promise<GraphData> {
   return res.data || { nodes: [], links: [] };
 }
 
+export async function createJournalEntry(data: {
+  title: string;
+  content: string;
+  mood?: string;
+  emotions?: string;
+}): Promise<JournalEntry> {
+  const res = await api.post('/journal', data);
+  return res.data;
+}
+
+export interface UserProfileResponse {
+  id: string;
+  username: string;
+  email: string;
+  preferences?: {
+    weeklySummaryEnabled?: boolean;
+    weeklySummaryDay?: number;
+    emailNotificationsEnabled?: boolean;
+  };
+}
+
+export async function fetchUserProfile(): Promise<UserProfileResponse> {
+  const res = await api.get('/user/me');
+  return res.data;
+}
+
+export async function updateUserPreferences(data: {
+  email?: string;
+  weeklySummaryEnabled?: boolean;
+  weeklySummaryDay?: number;
+  emailNotificationsEnabled?: boolean;
+}): Promise<{ message: string }> {
+  const res = await api.put('/user/preferences', data);
+  return res.data;
+}
+
+export async function deleteAccount(): Promise<{ message: string }> {
+  const res = await api.delete('/user');
+  return res.data;
+}
+
 export async function searchJournal(question: string): Promise<SearchResult[]> {
   if (!question.trim()) return [];
   const state = getAuthState();
@@ -162,3 +203,4 @@ export async function searchJournal(question: string): Promise<SearchResult[]> {
     engine: res.data.engine || 'RAG'
   }];
 }
+

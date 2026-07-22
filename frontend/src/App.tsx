@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { Toaster } from 'sonner';
 
 // Lazy-loaded routes for code splitting
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
@@ -45,6 +46,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster richColors position="top-right" />
       <ThemeProvider>
         <TooltipProvider>
           <BrowserRouter>

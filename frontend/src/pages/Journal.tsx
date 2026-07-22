@@ -8,11 +8,12 @@ import { format, parseISO } from 'date-fns';
 import type { JournalEntry } from '@/types/models';
 import { useQuery } from '@tanstack/react-query';
 import { fetchJournalEntries } from '@/lib/api';
+import { useJournalModalStore } from '@/stores/journalModalStore';
 
 export default function Journal() {
   const [search, setSearch] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
-  const [showEditor, setShowEditor] = useState(false);
+  const openModal = useJournalModalStore((s) => s.openModal);
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['journal-entries'],
@@ -31,8 +32,8 @@ export default function Journal() {
     <div>
       <PageHeader title="Journal" description="Your thoughts, captured and understood.">
         <button
-          onClick={() => setShowEditor(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 transition-opacity"
+          onClick={openModal}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
         >
           <Plus className="w-4 h-4" />
           New Entry
@@ -132,55 +133,6 @@ export default function Journal() {
           )}
         </AnimatePresence>
       </div>
-
-      {/* New Entry Modal */}
-      <AnimatePresence>
-        {showEditor && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-            onClick={() => setShowEditor(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-2xl rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 shadow-xl"
-            >
-              <h2 className="font-serif text-xl font-semibold text-[hsl(var(--foreground))] mb-4">
-                New Entry
-              </h2>
-              <input
-                type="text"
-                placeholder="Give this moment a title..."
-                className="w-full px-0 py-2 text-lg font-serif text-[hsl(var(--foreground))] bg-transparent border-none outline-none placeholder:text-[hsl(var(--muted-foreground))]"
-              />
-              <textarea
-                placeholder="Write freely. What's on your mind?"
-                rows={10}
-                className="w-full px-0 py-2 text-sm text-[hsl(var(--foreground))] bg-transparent border-none outline-none resize-none journal-text placeholder:text-[hsl(var(--muted-foreground))]"
-              />
-              <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-[hsl(var(--border))]">
-                <button
-                  onClick={() => setShowEditor(false)}
-                  className="px-4 py-2 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => setShowEditor(false)}
-                  className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 transition-opacity"
-                >
-                  Save Entry
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

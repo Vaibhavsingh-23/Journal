@@ -11,9 +11,11 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Plus,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
+import { useJournalModalStore } from '@/stores/journalModalStore';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -29,6 +31,7 @@ const navItems = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const openModal = useJournalModalStore((s) => s.openModal);
 
   return (
     <motion.aside
@@ -59,8 +62,26 @@ export function Sidebar() {
         </div>
       </div>
 
+      {/* Primary Flagship Action CTA */}
+      <div className="px-3 pt-4 pb-2">
+        <button
+          onClick={openModal}
+          className={cn(
+            'flex items-center justify-center gap-2.5 w-full py-2.5 px-3 rounded-xl shadow-md transition-all',
+            'bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))]',
+            'hover:opacity-95 active:scale-95'
+          )}
+          title="New Journal Entry (⌘N)"
+        >
+          <Plus className="w-5 h-5 flex-shrink-0" />
+          {!collapsed && (
+            <span className="text-sm font-semibold whitespace-nowrap">New Entry</span>
+          )}
+        </button>
+      </div>
+
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 py-2 px-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to || 
             (item.to !== '/dashboard' && location.pathname.startsWith(item.to));
