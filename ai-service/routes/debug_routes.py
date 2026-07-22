@@ -13,21 +13,22 @@ from insight.repositories.insight_repository import MongoInsightRepository
 from capture.repositories.entity_repository import MongoEntityRepository
 from dependencies import get_knowledge_repo, get_memory_repo, get_insight_repo, get_entity_repo
 
-router = APIRouter(prefix="/ai/debug", tags=["AI Debug"])
+router = APIRouter(tags=["AI Debug"])
 
 
-@router.get("/knowledge")
+@router.get("/debug/knowledge")
+@router.get("/ai/debug/knowledge")
 def get_knowledge(
     user_id: str, 
     repo: MongoKnowledgeRepository = Depends(get_knowledge_repo)
 ):
     """Inspect stored knowledge objects for a user."""
-    # Assuming the repo exposes the underlying pymongo collection for a raw dump
     cursor = repo.collection.find({"user_id": user_id}, {"_id": 0})
     return list(cursor)
 
 
-@router.get("/memories")
+@router.get("/debug/memories")
+@router.get("/ai/debug/memories")
 def get_memories(
     user_id: str, 
     repo: MongoMemoryRepository = Depends(get_memory_repo)
@@ -37,7 +38,8 @@ def get_memories(
     return [m.model_dump() for m in memories]
 
 
-@router.get("/insights")
+@router.get("/debug/insights")
+@router.get("/ai/debug/insights")
 def get_insights(
     user_id: str, 
     repo: MongoInsightRepository = Depends(get_insight_repo)
@@ -47,7 +49,8 @@ def get_insights(
     return [i.model_dump() for i in insights]
 
 
-@router.get("/pipeline")
+@router.get("/debug/pipeline")
+@router.get("/ai/debug/pipeline")
 def get_pipeline_state(
     user_id: str, 
     repo: MongoMemoryRepository = Depends(get_memory_repo)
@@ -61,7 +64,8 @@ def get_pipeline_state(
     }
 
 
-@router.get("/health")
+@router.get("/debug/health")
+@router.get("/ai/debug/health")
 def get_health(
     user_id: str,
     knowledge_repo: MongoKnowledgeRepository = Depends(get_knowledge_repo),
@@ -85,7 +89,9 @@ def get_health(
         "pending_validations": len(dirty)
     }
 
-@router.get("/graph")
+
+@router.get("/debug/graph")
+@router.get("/ai/debug/graph")
 def get_graph(
     user_id: str,
     memory_repo: MongoMemoryRepository = Depends(get_memory_repo),
@@ -94,7 +100,6 @@ def get_graph(
 ):
     """Generate ForceGraph2D compatible graph data from actual memories and entities."""
     memories = memory_repo.find_by_user(user_id)
-    # Get all entities for this user
     entities_cursor = entity_repo.collection.find({"user_id": user_id})
     entities = {str(e["id"]): e for e in entities_cursor}
     

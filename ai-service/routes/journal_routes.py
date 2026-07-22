@@ -4,10 +4,10 @@ journal_routes.py
 FastAPI router exposing all AI-service endpoints.
 
 Endpoints:
-    GET  /ai/health        — liveness check
-    POST /ai/embed/entry   — embed a single journal entry into ChromaDB
-    POST /ai/embed/all     — bulk-embed all entries for a user from MongoDB
-    POST /ai/query         — RAG: answer a question from journal context
+    GET  /health        /ai/health        — liveness check
+    POST /embed/entry   /ai/embed/entry   — embed a single journal entry into ChromaDB
+    POST /embed/all     /ai/embed/all     — bulk-embed all entries for a user from MongoDB
+    POST /query         /ai/query         — RAG: answer a question from journal context
 """
 
 from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks
@@ -18,7 +18,7 @@ from dependencies import get_retrieval_gateway, get_cognitive_orchestrator
 from memory.retrieval.retrieval_gateway import RetrievalGateway
 from orchestration.cognitive_orchestrator import CognitiveOrchestrator
 
-router = APIRouter(prefix="/ai", tags=["AI Journal"])
+router = APIRouter(tags=["AI Journal"])
 
 
 # ---------------------------------------------------------------------------
@@ -49,17 +49,19 @@ class QueryRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Routes
+# Routes (supports both root and /ai/ prefixed paths for 100% compatibility)
 # ---------------------------------------------------------------------------
 
 
 @router.get("/health")
+@router.get("/ai/health")
 def health():
     """Confirm the AI service is running."""
     return {"status": "ok", "service": "Journal AI"}
 
 
 @router.post("/embed/entry")
+@router.post("/ai/embed/entry")
 def embed_entry(
     req: EmbedEntryRequest, 
     background_tasks: BackgroundTasks,
@@ -101,6 +103,7 @@ def embed_entry(
 
 
 @router.post("/embed/all")
+@router.post("/ai/embed/all")
 def embed_all(req: EmbedAllRequest):
     """
     Bulk-embed all existing journal entries for a user from MongoDB.
@@ -120,6 +123,7 @@ def embed_all(req: EmbedAllRequest):
 
 
 @router.post("/query")
+@router.post("/ai/query")
 def query(req: QueryRequest, gateway: RetrievalGateway = Depends(get_retrieval_gateway)):
     """
     Answer a natural-language question using the user's journal entries as context.
@@ -144,6 +148,3 @@ def query(req: QueryRequest, gateway: RetrievalGateway = Depends(get_retrieval_g
         raise HTTPException(status_code=500, detail=result["error"])
 
     return result
-
-
-

@@ -25,8 +25,11 @@ export const api = axios.create({
   },
 });
 
+const rawAiUrl = import.meta.env.VITE_AI_API_URL || 'http://localhost:8001/ai';
+const aiBaseUrl = rawAiUrl.endsWith('/ai') ? rawAiUrl : `${rawAiUrl.replace(/\/+$/, '')}/ai`;
+
 export const aiApi = axios.create({
-  baseURL: import.meta.env.VITE_AI_API_URL || 'http://localhost:8001/ai',
+  baseURL: aiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
